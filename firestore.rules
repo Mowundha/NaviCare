@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// =============================================================================
+// NaviCare — Firestore Security Rules
+// =============================================================================
+// Design principles:
+//   1. Public, non-sensitive fields (names, availability, accessibility
+//      flags, geohash) are readable by any authenticated app user — this
+//      is what powers recommend_places() / match_caretakers() lookups.
+//   2. Sensitive verification data (KYC document refs, background-check
+//      results, government ID references) lives in a separate
+//      `private_verification` subcollection that NO client, not even the
+//      caretaker themselves, can read or write directly. Only your
+//      backend (Cloud Functions / Cloud Run using the Admin SDK, which
+//      bypasses these rules entirely) touches that subcollection.
+//   3. Nobody can write their own `is_available`, `verification_status`,
+//      or similar trust-sensitive fields directly — those are backend-
+//      controlled to prevent a compromised or malicious client from
+//      self-certifying as verified/available.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------
+    // Helper functions
+    // -------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Custom claim your backend sets on admin/staff accounts
+    // (e.g. via Firebase Admin SDK: auth.setCustomUserClaims(uid, {admin: true}))
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // -------------------------------------------------------------------
+    // users/{userId}
+    // -------------------------------------------------------------------
+    // A user reads/writes only their own profile. disability_types and
+    // coordinates are self-reported and fine for the owner to edit.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------
+    // caretakers/{caretakerId}
+    // -------------------------------------------------------------------
+    // Public profile fields (name, gender, supported_disabilities,
+    // geohash, is_available, rating, etc.) are readable by any signed-in
+    // user — this is exactly what match_caretakers() queries against.
+    //
+    // Caretakers CAN edit their own descriptive profile fields, but
+    // is_available is intentionally excluded from self-service writes
+    // below — toggling availability should go through a backend endpoint
+    // that also re-validates the caretaker's verification status hasn't
+    // lapsed, rather than a raw client field write.
+    match /caretakers/{caretakerId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(caretakerId);
+
+      allow update: if isOwner(caretakerId)
+                    && !request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasAny(['is_available', 'verification_status', 'supported_disabilities']);
+
+      // Backend-only path for availability toggles / verification status
+      // changes (Admin SDK writes bypass rules entirely, so this branch
+      // mainly documents intent — admin console access uses it too).
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+
+      // ---------------------------------------------------------------
+      // caretakers/{caretakerId}/private_verification/{docId}
+      // ---------------------------------------------------------------
+      // KYC document references, DigiLocker fetch results, background-
+      // check/court-record outcomes. Nobody reads or writes this from
+      // a client — full stop. Only server-side Admin SDK code (which
+      // ignores these rules) should ever touch it.
+      match /private_verification/{docId} {
+        allow read, write: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // accessible_places/{placeId}
+    // -------------------------------------------------------------------
+    // Seeded by the Overpass/data.gov.in ingestion pipeline (backend,
+    // Admin SDK) and editable by the registered hotel/restaurant owner
+    // for their own listing. Publicly readable — this is core browse/
+    // recommend functionality, no reason to gate it behind auth even,
+    // but keeping isSignedIn() here for consistency and simple abuse
+    // control (rate limiting is easier to reason about for authed users).
+    match /accessible_places/{placeId} {
+      allow read: if isSignedIn();
+
+      // A place "owner" field (set by your backend during onboarding
+      // approval) controls who may edit that specific listing.
+      allow update: if isSignedIn()
+                    && resource.data.owner_uid == request.auth.uid;
+
+      // Only backend ingestion / admin console creates and deletes places
+      // directly — self-registered places go through an approval workflow
+      // in your backend rather than a raw client create.
+      allow create, delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------
+    // ngos/{ngoId}
+    // -------------------------------------------------------------------
+    // Seeded from NGO Darpan / data.gov.in CSV import (backend only).
+    // Read-only from clients.
+    match /ngos/{ngoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

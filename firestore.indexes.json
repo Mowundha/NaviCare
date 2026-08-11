@@ -1,0 +1,34 @@
+{
+  "indexes": [
+
+    {
+      "collectionGroup": "caretakers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_available", "order": "ASCENDING" },
+        { "fieldPath": "geohash", "order": "ASCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "caretakers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_available", "order": "ASCENDING" },
+        { "fieldPath": "supported_disabilities", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "geohash", "order": "ASCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "accessible_places",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "geohash", "order": "ASCENDING" }
+      ]
+    }
+
+  ],
+  "fieldOverrides": []
+}
