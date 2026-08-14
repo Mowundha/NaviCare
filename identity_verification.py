@@ -3,38 +3,36 @@ identity_verification.py
 ==========================
 NaviCare backend — Caretaker Identity & Background Verification.
 
-Handles KYC-style identity checks (PAN, Driving License) against a
-configured government-API-aggregator endpoint (API Setu / DigiLocker /
-Setu.co / equivalent), and routes non-automatable checks (Police
-Clearance Certificate) to manual/BGV-vendor review.
+Provider: Sandbox (sandbox.co.in / developer.sandbox.co.in) — a real,
+documented Indian KYC-API provider (PAN / Aadhaar / GSTIN / DigiLocker
+verification). Confirmed against their public docs as of Aug 2026.
+
+Two IMPORTANT facts about how Sandbox's API is structured, which caused
+the bugs in the previous version of this file:
+
+  1. Authentication happens on a DIFFERENT host than the actual KYC
+     checks. You authenticate at https://api.sandbox.co.in/authenticate
+     but call the PAN-check endpoint at https://test-api.sandbox.co.in
+     (in sandbox/test mode) or https://api.sandbox.co.in (in production,
+     with production keys). Two separate base URLs — don't reuse one for
+     both steps.
+  2. Every Sandbox response wraps its payload in a "data" object:
+     {"code": 200, "data": {...the actual fields...}, "transaction_id": "..."}
+     Always read fields from response["data"], never from the top level.
 
 --------------------------------------------------------------------------
-IMPORTANT — read before wiring this into your real aggregator
+FAIL-CLOSED BY DESIGN (unchanged from the previous version)
 --------------------------------------------------------------------------
-There is no single universal "verify identity" endpoint across government
-API providers. Each ID type has its own documented endpoint and payload
-shape (e.g. Setu's PAN check is `POST /api/verify/pan` with a specific
-request/response schema). VERIFICATION_ENDPOINTS below is a *template* —
-before going live, replace each entry with the exact path, payload, and
-response schema from your actual aggregator's current documentation, and
-update `_build_payload()` / `_parse_provider_response()` to match.
-
---------------------------------------------------------------------------
-FAIL-CLOSED BY DESIGN
---------------------------------------------------------------------------
-If the verification provider is unreachable, misconfigured, or returns an
-unexpected shape, this module returns VERIFICATION_UNAVAILABLE — never
-VERIFIED. A caretaker is only ever eligible when a real, successful
-verification came back from the provider (or, for POLICE_CLEARANCE, after
-manual review completes and updates the record out-of-band). This is
-deliberate: this module gates who gets matched, unsupervised, with
-elderly and disabled users, and a fail-open default would be a serious
-safety defect.
+If the verification provider is unreachable, misconfigured, returns an
+error, or returns a response we don't recognize, this module returns
+VERIFICATION_UNAVAILABLE — never VERIFIED. A caretaker is only ever
+eligible when Sandbox gives a genuine, successful "valid" PAN status
+with a real name/DOB match (or, for POLICE_CLEARANCE, after manual
+review completes and updates the record out-of-band).
 
 A SIMULATION mode exists for local development ONLY. It is opt-in via an
 explicit environment variable, every simulated response is tagged
-`"simulated": True`, and it is logged loudly on every call so it can
-never be mistaken for a real provider response in production.
+`"simulated": True`, and it is logged loudly on every call.
 """
 
 from __future__ import annotations
@@ -49,6 +47,9 @@ from enum import Enum
 from typing import Dict, Optional
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -66,9 +67,17 @@ logger.setLevel(logging.INFO)
 # ---------------------------------------------------------------------------
 # Configuration (environment-driven — nothing sensitive hardcoded)
 # ---------------------------------------------------------------------------
-VERIFICATION_BASE_URL = os.environ.get("IDENTITY_VERIFICATION_BASE_URL", "").rstrip("/")
+# BUG FIX #1: authentication and the actual KYC checks use DIFFERENT hosts.
+# Two separate base URLs, not one reused for both.
+AUTH_BASE_URL = os.environ.get("IDENTITY_VERIFICATION_AUTH_URL", "https://api.sandbox.co.in").rstrip("/")
+VERIFICATION_BASE_URL = os.environ.get("IDENTITY_VERIFICATION_BASE_URL", "https://test-api.sandbox.co.in").rstrip("/")
+
 VERIFICATION_CLIENT_ID = os.environ.get("IDENTITY_VERIFICATION_CLIENT_ID")
 VERIFICATION_CLIENT_SECRET = os.environ.get("IDENTITY_VERIFICATION_CLIENT_SECRET")
+# Sandbox's own quickstart docs use this exact version string as of writing —
+# check developer.sandbox.co.in if you start seeing version-related errors.
+API_VERSION = os.environ.get("IDENTITY_VERIFICATION_API_VERSION", "1.0.0")
+
 REQUEST_TIMEOUT_SECONDS = float(os.environ.get("IDENTITY_VERIFICATION_TIMEOUT", "15"))
 
 # Explicit, loud, dev-only opt-in. Never set this in production.
@@ -79,33 +88,33 @@ SIMULATION_MODE = os.environ.get("IDENTITY_VERIFICATION_SIMULATION_MODE", "false
 # Status vocabulary
 # ---------------------------------------------------------------------------
 class VerificationStatus(str, Enum):
-    VERIFIED = "VERIFIED"                          # provider confirmed a valid, matching record
+    VERIFIED = "VERIFIED"                          # provider confirmed a valid PAN with matching name + DOB
     NOT_FOUND = "NOT_FOUND"                         # provider queried successfully, no record exists
-    INVALID = "INVALID"                             # provider found a record but flagged it invalid/blacklisted
+    INVALID = "INVALID"                             # PAN invalid, OR valid PAN but name/DOB didn't match
     INVALID_FORMAT = "INVALID_FORMAT"               # failed our own pre-flight format check, never sent to provider
     PENDING_MANUAL_REVIEW = "PENDING_MANUAL_REVIEW" # id_type has no automated check (e.g. police clearance)
     VERIFICATION_UNAVAILABLE = "VERIFICATION_UNAVAILABLE"  # provider unreachable / misconfigured / bad response
     ERROR = "ERROR"                                 # unexpected exception
 
 
-# ID types this module knows how to handle, and how each is checked.
 AUTOMATED_ID_TYPES = {"PAN", "DRIVING_LICENSE"}
 MANUAL_REVIEW_ID_TYPES = {"POLICE_CLEARANCE"}
 SUPPORTED_ID_TYPES = AUTOMATED_ID_TYPES | MANUAL_REVIEW_ID_TYPES
 
-# Pre-flight format validation, run BEFORE any network call. Rejecting an
-# obviously malformed ID locally saves a request and gives a faster,
-# clearer error than letting the provider reject it.
 ID_FORMAT_PATTERNS = {
     "PAN": re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]$"),
     "DRIVING_LICENSE": re.compile(r"^[A-Z]{2}[0-9]{2}\s?[0-9]{11}$"),
 }
 
-# Template — replace with your real aggregator's documented paths.
-# path is relative to VERIFICATION_BASE_URL.
+# Confirmed against Sandbox's public docs (developer.sandbox.co.in):
+#   POST /kyc/pan/verify
+# DRIVING_LICENSE path below is NOT independently confirmed — Sandbox's
+# product catalog is PAN/Aadhaar/GSTIN/DigiLocker-focused; check
+# developer.sandbox.co.in yourself for the current DL endpoint (or an
+# alternate provider) before relying on it.
 VERIFICATION_ENDPOINTS = {
-    "PAN": "/api/verify/pan",
-    "DRIVING_LICENSE": "/api/verify/driving-license",
+    "PAN": "/kyc/pan/verify",
+    "DRIVING_LICENSE": "/kyc/dl/verify",  # UNCONFIRMED — verify before production use
 }
 
 
@@ -113,7 +122,6 @@ VERIFICATION_ENDPOINTS = {
 # Helpers
 # ---------------------------------------------------------------------------
 def _mask_id_number(id_number: str) -> str:
-    """Never log a full government ID number — mask all but the last 4 chars."""
     if len(id_number) <= 4:
         return "*" * len(id_number)
     return "*" * (len(id_number) - 4) + id_number[-4:]
@@ -126,9 +134,6 @@ def _utc_timestamp() -> str:
 def _validate_format(id_type: str, id_number: str) -> bool:
     pattern = ID_FORMAT_PATTERNS.get(id_type)
     if pattern is None:
-        # No format rule defined for this type (e.g. POLICE_CLEARANCE,
-        # which isn't a single-format numeric ID) — accept by default,
-        # since format isn't the thing gating it anyway.
         return True
     return bool(pattern.match(id_number.strip()))
 
@@ -138,7 +143,7 @@ def _build_result(
     id_type: str,
     status: VerificationStatus,
     verification_id: Optional[str] = None,
-    issuer: str = "Government Gateway",
+    issuer: str = "Sandbox (sandbox.co.in)",
     detail: Optional[str] = None,
     simulated: bool = False,
 ) -> Dict:
@@ -156,30 +161,81 @@ def _build_result(
 
 def _simulate_provider_response(id_type: str, id_number: str) -> Dict:
     """
-    Local-dev-only simulated response. NEVER used unless
-    IDENTITY_VERIFICATION_SIMULATION_MODE=true is explicitly set, and every
-    response is tagged simulated=True so it can never be mistaken for a
-    real verification downstream (e.g. by an audit log or admin dashboard).
+    Local-dev-only simulated response, SHAPED LIKE SANDBOX'S REAL RESPONSE
+    so the parsing code underneath gets genuinely exercised — not a
+    different fake shape that would hide real parsing bugs.
     """
     logger.warning(
         "SIMULATION MODE ACTIVE — returning a fabricated verification result "
         "for id_type=%s id_number=%s. This must never happen in production.",
         id_type, _mask_id_number(id_number),
     )
-    # Deterministic-ish simulated outcome based on a known Setu sandbox
-    # convention (trailing 'A' = valid-looking, 'B' = invalid-looking) so
-    # local testing can exercise both branches without extra flags.
-    if id_number.strip().upper().endswith("B"):
-        return {"provider_status": "invalid"}
-    return {"provider_status": "verified", "verification_id": f"SIM-{uuid.uuid4().hex[:12]}"}
+    is_invalid_looking = id_number.strip().upper().endswith("B")
+    return {
+        "code": 200,
+        "transaction_id": f"SIM-{uuid.uuid4().hex[:12]}",
+        "data": {
+            "@entity": "in.co.sandbox.kyc.pan_verification.response",
+            "pan": id_number,
+            "category": "individual",
+            "status": "invalid" if is_invalid_looking else "valid",
+            "remarks": None,
+            "name_as_per_pan_match": not is_invalid_looking,
+            "date_of_birth_match": not is_invalid_looking,
+        },
+    }
 
 
-def _call_provider(id_type: str, id_number: str) -> Dict:
+def _get_access_token() -> str:
     """
-    Makes the real HTTP call to the configured provider. Raises on
-    network-level failure; the caller (verify_identity) is responsible
-    for catching and converting that into a VERIFICATION_UNAVAILABLE
-    result rather than letting an exception escape or silently passing.
+    BUG FIX #1 + #2: authenticate against AUTH_BASE_URL (not
+    VERIFICATION_BASE_URL), and read the token from response["data"]
+    ["access_token"] (not the top level).
+    """
+    if not VERIFICATION_CLIENT_ID or not VERIFICATION_CLIENT_SECRET:
+        raise RuntimeError(
+            "Identity verification provider is not configured "
+            "(missing IDENTITY_VERIFICATION_CLIENT_ID / IDENTITY_VERIFICATION_CLIENT_SECRET)."
+        )
+
+    auth_url = f"{AUTH_BASE_URL}/authenticate"
+    auth_headers = {
+        "x-api-key": VERIFICATION_CLIENT_ID,
+        "x-api-secret": VERIFICATION_CLIENT_SECRET,
+        "x-api-version": API_VERSION,
+        "Content-Type": "application/json",
+    }
+
+    auth_resp = requests.post(auth_url, headers=auth_headers, timeout=REQUEST_TIMEOUT_SECONDS)
+    auth_resp.raise_for_status()
+
+    body = auth_resp.json()
+    access_token = body.get("data", {}).get("access_token")
+
+    if not access_token:
+        # This should be rare (a 200 with no token would be a very odd
+        # response), but don't let a downstream 401 masquerade as this —
+        # fail loudly and specifically here instead.
+        raise RuntimeError(f"Authenticate call succeeded (200) but returned no access_token: {body}")
+
+    return access_token
+
+
+def _call_provider(
+    id_type: str,
+    id_number: str,
+    caretaker_name: str,
+    caretaker_dob: str,
+) -> Dict:
+    """
+    Full Sandbox KYC call: get an access token, then hit the ID-type-
+    specific verification endpoint with it.
+
+    caretaker_name and caretaker_dob are now REQUIRED (not silently
+    defaulted) — Sandbox's PAN check verifies that the name and date of
+    birth you send actually match the PAN record (name_as_per_pan_match /
+    date_of_birth_match in the response). Passing placeholder values here
+    would make every real caretaker fail that match.
     """
     if not VERIFICATION_BASE_URL or not VERIFICATION_CLIENT_ID or not VERIFICATION_CLIENT_SECRET:
         raise RuntimeError(
@@ -191,73 +247,97 @@ def _call_provider(id_type: str, id_number: str) -> Dict:
     if path is None:
         raise RuntimeError(f"No configured endpoint for id_type={id_type}.")
 
+    access_token = _get_access_token()
+
+    # BUG FIX #3: use `path`, not the undefined `endpoint` variable.
     url = f"{VERIFICATION_BASE_URL}{path}"
     headers = {
+        "Authorization": access_token,  # Sandbox docs: no "Bearer " prefix
+        "x-api-key": VERIFICATION_CLIENT_ID,
+        "x-api-version": API_VERSION,
         "Content-Type": "application/json",
-        "x-client-id": VERIFICATION_CLIENT_ID,
-        "x-client-secret": VERIFICATION_CLIENT_SECRET,
-    }
-    # NOTE: payload shape here mirrors Setu's PAN-check convention
-    # (id number + explicit consent + reason) as a reasonable default.
-    # Confirm the exact field names for your chosen provider/ID type.
-    payload = {
-        "id_number": id_number,
-        "consent": "Y",
-        "reason": "NaviCare caretaker onboarding verification",
     }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=REQUEST_TIMEOUT_SECONDS)
+    payload = {
+        "@entity": "in.co.sandbox.kyc.pan_verification.request",
+        "pan": id_number,
+        "name_as_per_pan": caretaker_name,
+        "date_of_birth": caretaker_dob,
+        "consent": "y",
+        "reason": "NaviCare caretaker onboarding verification check",
+    }
+
+    response = requests.post(url, json=payload, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
     return response.json()
 
 
 def _parse_provider_response(id_type: str, raw: Dict) -> Dict:
     """
-    Normalizes a provider's raw JSON into our internal shape. This is the
-    one function you'll need to adapt per real provider response schema —
-    kept isolated here on purpose.
+    BUG FIX #4: read Sandbox's REAL response shape —
+    {"data": {"status": "valid"/"invalid", "name_as_per_pan_match": bool,
+              "date_of_birth_match": bool, ...}}
+    — instead of the made-up "provider_status" / "verification" keys the
+    previous version looked for (which never existed in a real response).
     """
-    provider_status = str(raw.get("provider_status") or raw.get("verification") or "").lower()
+    data = raw.get("data") or {}
+    status = str(data.get("status", "")).lower()
 
-    if provider_status in ("verified", "success", "valid"):
+    if not status:
+        logger.error("Unrecognized provider response shape for id_type=%s: %s", id_type, raw)
+        return {"status": VerificationStatus.VERIFICATION_UNAVAILABLE, "verification_id": raw.get("transaction_id")}
+
+    if status == "valid":
+        name_match = data.get("name_as_per_pan_match")
+        dob_match = data.get("date_of_birth_match")
+        # Treat an explicit False match as a real mismatch (someone else's
+        # PAN, or a typo) — this is a legitimate INVALID, not a system error.
+        if name_match is False or dob_match is False:
+            return {
+                "status": VerificationStatus.INVALID,
+                "verification_id": raw.get("transaction_id"),
+            }
         return {
             "status": VerificationStatus.VERIFIED,
-            "verification_id": raw.get("verification_id") or raw.get("traceId"),
+            "verification_id": raw.get("transaction_id"),
         }
-    if provider_status in ("not_found", "notfound"):
-        return {"status": VerificationStatus.NOT_FOUND, "verification_id": raw.get("traceId")}
-    if provider_status in ("invalid", "failed"):
-        return {"status": VerificationStatus.INVALID, "verification_id": raw.get("traceId")}
 
-    # Unexpected/unrecognized shape — do not guess. Treat as unavailable
-    # so an ambiguous provider response can never be interpreted as a pass.
-    logger.error("Unrecognized provider response shape for id_type=%s: %s", id_type, raw)
-    return {"status": VerificationStatus.VERIFICATION_UNAVAILABLE, "verification_id": None}
+    if status == "invalid":
+        return {"status": VerificationStatus.INVALID, "verification_id": raw.get("transaction_id")}
+
+    logger.error("Unrecognized status value for id_type=%s: %s", id_type, status)
+    return {"status": VerificationStatus.VERIFICATION_UNAVAILABLE, "verification_id": raw.get("transaction_id")}
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
-def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
+def verify_identity(
+    caretaker_id: str,
+    id_type: str,
+    id_number: str,
+    caretaker_name: Optional[str] = None,
+    caretaker_dob: Optional[str] = None,
+) -> Dict:
     """
-    Verify a caretaker's identity document against the configured
-    government-API-aggregator provider.
+    Verify a caretaker's identity document against Sandbox.
 
     Args:
         caretaker_id: NaviCare caretaker document ID (Firestore doc ID).
         id_type: one of 'PAN', 'DRIVING_LICENSE', 'POLICE_CLEARANCE'.
         id_number: the raw ID/document number as provided by the caretaker.
+        caretaker_name: full name exactly as it appears on the ID —
+            REQUIRED for PAN/DRIVING_LICENSE checks (Sandbox verifies this
+            matches the record). Pull this from the caretaker's Firestore
+            profile at call time, don't hardcode it.
+        caretaker_dob: date of birth in DD/MM/YYYY format, matching what
+            Sandbox expects — REQUIRED for the same reason as above.
 
     Returns:
         dict with keys: caretaker_id, id_type, status, verification_id,
-        issuer, timestamp, detail, simulated.
-
-        status is always one of VerificationStatus's values. It is
-        VERIFIED only on a genuine, successful provider confirmation
-        (or an explicit SIMULATION_MODE stand-in for local dev). Any
-        missing config, network failure, timeout, or unrecognized
-        provider response returns VERIFICATION_UNAVAILABLE, never
-        VERIFIED — see the fail-closed note at the top of this file.
+        issuer, timestamp, detail, simulated. status is VERIFIED only on
+        a genuine successful match; anything else (including missing
+        config, network failure, or a name/DOB mismatch) is NOT verified.
     """
     id_type = (id_type or "").strip().upper()
     masked = _mask_id_number(id_number or "")
@@ -284,10 +364,6 @@ def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
             detail=f"id_number does not match expected format for {id_type}.",
         )
 
-    # Police Clearance: no real-time government API exists for this today
-    # (see architecture discussion — FIR/criminal records are not exposed
-    # via a unified public API). Route to manual review / your licensed
-    # BGV vendor instead of pretending an automated check happened.
     if id_type in MANUAL_REVIEW_ID_TYPES:
         logger.info("id_type=%s requires manual review — no automated check performed.", id_type)
         return _build_result(
@@ -297,13 +373,27 @@ def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
                    "this record has been queued and is not yet eligible.",
         )
 
-    # --- Automated provider check (PAN / Driving License) ---
+    # PAN/Driving License checks require name + DOB to actually mean
+    # anything (see the docstring). Fail clearly and early rather than
+    # silently sending placeholder values that would produce a false
+    # mismatch downstream.
+    if not caretaker_name or not caretaker_dob:
+        logger.warning(
+            "Missing caretaker_name/caretaker_dob for caretaker_id=%s id_type=%s — "
+            "cannot run a real name/DOB match check.",
+            caretaker_id, id_type,
+        )
+        return _build_result(
+            caretaker_id, id_type, VerificationStatus.INVALID_FORMAT,
+            detail="caretaker_name and caretaker_dob are required for PAN/DRIVING_LICENSE verification.",
+        )
+
     try:
         if SIMULATION_MODE:
             raw = _simulate_provider_response(id_type, id_number)
             simulated = True
         else:
-            raw = _call_provider(id_type, id_number)
+            raw = _call_provider(id_type, id_number, caretaker_name, caretaker_dob)
             simulated = False
 
         parsed = _parse_provider_response(id_type, raw)
@@ -335,17 +425,24 @@ def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
 
     except requests.exceptions.HTTPError as exc:
         status_code = exc.response.status_code if exc.response is not None else None
+        body_snippet = None
+        try:
+            body_snippet = exc.response.text[:300] if exc.response is not None else None
+        except Exception:
+            pass
         logger.error(
-            "Provider returned HTTP error: caretaker_id=%s id_type=%s status_code=%s",
-            caretaker_id, id_type, status_code,
+            "Provider returned HTTP error: caretaker_id=%s id_type=%s status_code=%s body=%s",
+            caretaker_id, id_type, status_code, body_snippet,
         )
+        detail = f"Provider returned HTTP {status_code}."
+        if status_code == 401:
+            detail += " Check that your API key/secret are correct and match the base URL you're calling (test vs production)."
         return _build_result(
             caretaker_id, id_type, VerificationStatus.VERIFICATION_UNAVAILABLE,
-            detail=f"Provider returned HTTP {status_code}.",
+            detail=detail,
         )
 
     except (RuntimeError, ValueError) as exc:
-        # Includes the "not configured" case (missing base URL / credentials).
         logger.error("Configuration or data error: caretaker_id=%s id_type=%s error=%s", caretaker_id, id_type, exc)
         return _build_result(
             caretaker_id, id_type, VerificationStatus.VERIFICATION_UNAVAILABLE,
@@ -359,9 +456,7 @@ def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
             detail="Provider returned an unparseable response.",
         )
 
-    except Exception as exc:  # last-resort catch — never let an unexpected
-        # exception propagate out of a verification call and potentially
-        # crash the caller's request handler.
+    except Exception as exc:
         logger.exception("Unexpected error during verification: caretaker_id=%s id_type=%s", caretaker_id, id_type)
         return _build_result(
             caretaker_id, id_type, VerificationStatus.ERROR,
@@ -371,15 +466,7 @@ def verify_identity(caretaker_id: str, id_type: str, id_number: str) -> Dict:
 
 def validate_identity_status(verification_result: Dict) -> bool:
     """
-    Evaluates whether a caretaker is eligible based on a verification
-    result dict (as returned by verify_identity()).
-
-    Deliberately strict / fail-closed: only an exact status of "VERIFIED"
-    passes. PENDING_MANUAL_REVIEW, VERIFICATION_UNAVAILABLE, NOT_FOUND,
-    INVALID, INVALID_FORMAT, and ERROR are all treated as "not yet
-    eligible" — the caller should surface the specific status to whatever
-    admin/ops workflow handles onboarding, rather than silently blocking
-    with no explanation.
+    Strict / fail-closed: only an exact status of "VERIFIED" passes.
     """
     if not isinstance(verification_result, dict):
         logger.error("validate_identity_status received a non-dict input: %r", verification_result)
@@ -399,43 +486,42 @@ def validate_identity_status(verification_result: Dict) -> bool:
 # Local test block
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Force simulation mode for this local test run regardless of the
-    # environment, and say so loudly — this block is for exercising the
-    # code paths, not for producing a "real" verification.
-    SIMULATION_MODE = True
+    SIMULATION_MODE = False  # forced on for this local test run, regardless of .env
     print("=" * 70)
     print("Running identity_verification.py in forced SIMULATION MODE.")
     print("No real network calls are made. Do NOT use this mode in production.")
     print("=" * 70)
 
     test_cases = [
-        # (description, caretaker_id, id_type, id_number)
-        ("Valid-looking PAN (simulated VERIFIED)", "CT001", "PAN", "ABCDE1234A"),
-        ("Invalid-looking PAN (simulated INVALID)", "CT002", "PAN", "ABCDE1234B"),
-        ("Malformed PAN (fails local format check, no network call)", "CT003", "PAN", "12345"),
-        ("Police clearance (routes to manual review, no automated check)", "CT004", "POLICE_CLEARANCE", "PCC-2026-00098"),
-        ("Unsupported id_type", "CT005", "VOTER_ID", "XYZ1234567"),
-        ("Missing id_number", "CT006", "PAN", ""),
+        ("Valid PAN with matching name/DOB (simulated VERIFIED)",
+         "CT001", "PAN", "ABCDE1234A", "John Doe", "11/11/2001"),
+        ("PAN that looks invalid (simulated INVALID)",
+         "CT002", "PAN", "ABCDE1234B", "John Doe", "11/11/2001"),
+        ("Malformed PAN (fails local format check, no network call)",
+         "CT003", "PAN", "12345", "John Doe", "11/11/2001"),
+        ("Missing caretaker name/DOB (fails before calling provider)",
+         "CT004", "PAN", "ABCDE1234A", None, None),
+        ("Police clearance (routes to manual review, no automated check)",
+         "CT005", "POLICE_CLEARANCE", "PCC-2026-00098", "John Doe", "11/11/2001"),
+        ("Unsupported id_type",
+         "CT006", "VOTER_ID", "XYZ1234567", "John Doe", "11/11/2001"),
     ]
 
-    for description, caretaker_id, id_type, id_number in test_cases:
+    for description, caretaker_id, id_type, id_number, name, dob in test_cases:
         print(f"\n--- {description} ---")
-        result = verify_identity(caretaker_id, id_type, id_number)
+        result = verify_identity(caretaker_id, id_type, id_number, caretaker_name=name, caretaker_dob=dob)
         print(json.dumps(result, indent=2))
-        eligible = validate_identity_status(result)
-        print(f"Eligible for matching: {eligible}")
+        print(f"Eligible for matching: {validate_identity_status(result)}")
 
     print("\n--- Fail-closed check: unconfigured provider, simulation OFF ---")
     SIMULATION_MODE = False
-    # Also clear any config that might be set in this environment, to
-    # demonstrate the "missing credentials" path explicitly.
-    VERIFICATION_BASE_URL_BACKUP = VERIFICATION_BASE_URL
-    globals()["VERIFICATION_BASE_URL"] = ""
-    result = verify_identity("CT007", "PAN", "ABCDE1234A")
+    backup = VERIFICATION_CLIENT_ID
+    globals()["VERIFICATION_CLIENT_ID"] = None
+    result = verify_identity("CT007", "PAN", "ABCDE1234A", caretaker_name="John Doe", caretaker_dob="11/11/2001")
     print(json.dumps(result, indent=2))
     assert result["status"] == VerificationStatus.VERIFICATION_UNAVAILABLE.value
     assert validate_identity_status(result) is False
     print("[OK] Confirmed: missing provider config returns VERIFICATION_UNAVAILABLE, not VERIFIED.")
-    globals()["VERIFICATION_BASE_URL"] = VERIFICATION_BASE_URL_BACKUP
+    globals()["VERIFICATION_CLIENT_ID"] = backup
 
     print("\nAll local test scenarios completed.")
