@@ -6,7 +6,9 @@ NaviCare — Core Recommendation & Matching Engine
 Handles:
   1. Accessible place recommendations (Haversine distance + accessibility scoring)
   2. Caretaker matching (availability, capability, gender preference with fallback)
-  3. Nearby NGO discovery
+
+NOTE: NGO discovery was part of an earlier plan and has been removed —
+this module no longer has an NGO model, ranking, or lookup function.
 
 Dependencies:
   pip install pydantic
@@ -54,15 +56,6 @@ class Place(BaseModel):
     longitude: float
 
 
-class NGO(BaseModel):
-    ngo_id: str
-    organization_name: str
-    services_offered: List[str] = Field(default_factory=list)
-    operating_city: str
-    latitude: float
-    longitude: float
-
-
 # ---------------------------------------------------------------------------
 # Result / Output Models
 # ---------------------------------------------------------------------------
@@ -83,11 +76,6 @@ class CaretakerMatchResult(BaseModel):
     message: Optional[str] = None
     matches: List[RankedCaretaker] = Field(default_factory=list)
     fallback_recommendations: List[RankedCaretaker] = Field(default_factory=list)
-
-
-class RankedNGO(BaseModel):
-    ngo: NGO
-    distance_km: float
 
 
 # ---------------------------------------------------------------------------
@@ -273,32 +261,6 @@ def match_caretakers(
 
 
 # ---------------------------------------------------------------------------
-# 3. NGO Discovery
-# ---------------------------------------------------------------------------
-
-def fetch_nearby_ngos(
-    user: UserProfile,
-    ngos: List[NGO],
-    max_distance_km: float = 20.0,
-) -> List[RankedNGO]:
-    """
-    Return NGOs within max_distance_km of the user, sorted by proximity.
-    """
-    results: List[RankedNGO] = []
-
-    for ngo in ngos:
-        distance = haversine_distance(
-            user.Current_latitude, user.Current_longitude,
-            ngo.latitude, ngo.longitude,
-        )
-        if distance <= max_distance_km:
-            results.append(RankedNGO(ngo=ngo, distance_km=round(distance, 3)))
-
-    results.sort(key=lambda rn: rn.distance_km)
-    return results
-
-
-# ---------------------------------------------------------------------------
 # Test / Demo Block
 # ---------------------------------------------------------------------------
 
@@ -393,24 +355,6 @@ if __name__ == "__main__":
     ]
 
     # -----------------------------------------------------------------
-    # Mock NGOs
-    # -----------------------------------------------------------------
-    ngos = [
-        NGO(
-            ngo_id="N001", organization_name="Chennai Accessibility Trust",
-            services_offered=["Volunteer Escort", "Wheelchair Rental"],
-            operating_city="Chennai",
-            latitude=13.0900, longitude=80.2200,
-        ),
-        NGO(
-            ngo_id="N002", organization_name="Enable India Chapter",
-            services_offered=["Sign Language Interpreter", "Escort Service"],
-            operating_city="Chennai",
-            latitude=13.2000, longitude=80.3500,  # farther away
-        ),
-    ]
-
-    # -----------------------------------------------------------------
     # 1. Place Recommendations
     # -----------------------------------------------------------------
     _print_header("PLACE RECOMMENDATIONS for Anjali (mobility + visual)")
@@ -462,13 +406,5 @@ if __name__ == "__main__":
     if result_male.matches:
         for rc in result_male.matches:
             print(f"  - {rc.caretaker.full_name} ({rc.caretaker.gender}) | {rc.distance_km} km")
-
-    # -----------------------------------------------------------------
-    # 3. Nearby NGOs
-    # -----------------------------------------------------------------
-    _print_header("NEARBY NGOs for Anjali")
-    ranked_ngos = fetch_nearby_ngos(user_female, ngos, max_distance_km=20.0)
-    for rn in ranked_ngos:
-        print(f"- {rn.ngo.organization_name:28s} | dist={rn.distance_km:6.2f} km")
 
     print("\nAll demo scenarios executed successfully.\n")

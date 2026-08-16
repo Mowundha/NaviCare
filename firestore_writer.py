@@ -1,7 +1,7 @@
 """
 firestore_writer.py
 =====================
-Writes transformed Place / NGO records into Firestore.
+Writes transformed Place records into Firestore.
 
 Adds a `geohash` field to every document at write time — this is the field
 your app's live geo-queries will range-query against (see the architecture
@@ -9,7 +9,7 @@ notes: Firestore has no native radius query, so geohash + Haversine
 refinement is the standard pattern).
 
 Uses Firestore's `batch()` writes (max 500 ops per batch) so seeding
-thousands of places/NGOs doesn't mean thousands of round-trips, and uses
+thousands of places doesn't mean thousands of round-trips, and uses
 `.set(doc, merge=True)` keyed by a stable ID so re-running the job upserts
 rather than duplicating records.
 """
@@ -24,7 +24,6 @@ from firebase_admin import credentials, firestore
 from config import (
     FIREBASE_SERVICE_ACCOUNT_PATH,
     FIRESTORE_PLACES_COLLECTION,
-    FIRESTORE_NGOS_COLLECTION,
 )
 
 logger = logging.getLogger("firestore_writer")
@@ -81,26 +80,5 @@ def upsert_places(records: List[Dict]) -> int:
         batch.commit()
         written += len(chunk)
         logger.info("Committed batch of %d place records (%d total so far)", len(chunk), written)
-
-    return written
-
-
-def upsert_ngos(records: List[Dict]) -> int:
-    """
-    Upsert NGO records into Firestore, keyed by `ngo_id`.
-    """
-    db = _init_firestore()
-    collection = db.collection(FIRESTORE_NGOS_COLLECTION)
-
-    written = 0
-    for chunk in _chunk(records, _BATCH_LIMIT):
-        batch = db.batch()
-        for record in chunk:
-            record = _with_geohash(record)
-            doc_ref = collection.document(str(record["ngo_id"]))
-            batch.set(doc_ref, record, merge=True)
-        batch.commit()
-        written += len(chunk)
-        logger.info("Committed batch of %d NGO records (%d total so far)", len(chunk), written)
 
     return written

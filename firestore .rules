@@ -113,15 +113,5 @@ service cloud.firestore {
       // in your backend rather than a raw client create.
       allow create, delete: if isAdmin();
     }
-
-    // -------------------------------------------------------------------
-    // ngos/{ngoId}
-    // -------------------------------------------------------------------
-    // Seeded from NGO Darpan / data.gov.in CSV import (backend only).
-    // Read-only from clients.
-    match /ngos/{ngoId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
   }
 }

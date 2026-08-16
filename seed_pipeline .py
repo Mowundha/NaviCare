@@ -3,15 +3,17 @@ seed_pipeline.py
 =================
 Orchestrates the full NaviCare data-ingestion job:
 
-  1. For each configured city bounding box and place category:
-       Overpass fetch -> transform -> Firestore upsert
-  2. NGO Darpan CSV -> transform -> Firestore upsert
+  For each configured city bounding box and place category:
+    Overpass fetch -> transform -> Firestore upsert
+
+NOTE: NGO Darpan ingestion was part of an earlier plan and has been
+removed — this pipeline now only seeds accessible_places.
 
 Run this manually the first time to seed your database:
     python seed_pipeline.py
 
 Then deploy it as a scheduled job (see the deployment notes at the bottom
-of this file) so places/NGOs stay reasonably fresh without ever being a
+of this file) so places stay reasonably fresh without ever being a
 live dependency in your app's request path.
 """
 
@@ -21,8 +23,7 @@ import sys
 from config import CITY_BBOXES, PLACE_OSM_FILTERS
 from overpass_client import fetch_places_for_category
 from place_transformer import transform_elements
-from firestore_writer import upsert_places, upsert_ngos
-from ngo_csv_importer import load_ngo_csv
+from firestore_writer import upsert_places
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,29 +59,9 @@ def run_places_ingestion() -> None:
     logger.info("Places ingestion complete. Total upserted: %d", total_written)
 
 
-def run_ngo_ingestion() -> None:
-    try:
-        records = load_ngo_csv()
-    except FileNotFoundError:
-        logger.warning(
-            "NGO CSV not found — skipping NGO ingestion this run. "
-            "Download the latest NGO Darpan export from data.gov.in and "
-            "update NGO_CSV_PATH in config.py."
-        )
-        return
-
-    if not records:
-        logger.warning("NGO CSV parsed but yielded zero usable records — check NGO_CSV_COLUMN_MAP.")
-        return
-
-    written = upsert_ngos(records)
-    logger.info("NGO ingestion complete. Total upserted: %d", written)
-
-
 def main() -> None:
     logger.info("Starting NaviCare data-ingestion pipeline")
     run_places_ingestion()
-    run_ngo_ingestion()
     logger.info("Pipeline run finished.")
 
 
@@ -102,8 +83,7 @@ if __name__ == "__main__":
 #   2. Deploy as a Cloud Run Job:
 #        gcloud run jobs create navicare-seed-job --source . --region asia-south1
 #   3. Schedule it with Cloud Scheduler (weekly for places, since OSM POI
-#      data changes slowly; monthly is enough once NGO ingestion is split
-#      into its own job):
+#      data changes slowly):
 #        gcloud scheduler jobs create http navicare-seed-weekly \
 #          --schedule="0 3 * * 1" \
 #          --uri="<Cloud Run Jobs REST trigger URI>" \

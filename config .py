@@ -71,29 +71,12 @@ WHEELCHAIR_TRUE_VALUES = {"yes", "limited"}
 # Firestore
 # ---------------------------------------------------------------------------
 FIRESTORE_PLACES_COLLECTION = "accessible_places"
-FIRESTORE_NGOS_COLLECTION = "ngos"
 
 # Path to your Firebase service-account JSON (Application Default
 # Credentials also work if running on GCP infra — see firestore_writer.py).
 FIREBASE_SERVICE_ACCOUNT_PATH = "service-account.json"
 
-# ---------------------------------------------------------------------------
-# NGO Darpan / data.gov.in CSV import
-# ---------------------------------------------------------------------------
-# data.gov.in mostly ships downloadable CSV/XML resource files rather than a
-# stable live query API for the NGO Darpan directory. Point this at the
-# local path where you've downloaded the current dataset export.
-NGO_CSV_PATH = "ngo_darpan_export.csv"
-
-# Column name mapping: your NGO field -> source CSV column name.
-# Adjust these once you download the real file — data.gov.in exports change
-# column headers between dataset versions, so this is the one thing you
-# should expect to edit after each fresh download.
-NGO_CSV_COLUMN_MAP = {
-    "ngo_id": "unique_id",
-    "organization_name": "ngo_name",
-    "services_offered": "sector_names",     # usually a delimited string, e.g. "Health; Disability; Education"
-    "operating_city": "city",
-    "latitude": "latitude",
-    "longitude": "longitude",
-}
+# NOTE: NGO Darpan / data.gov.in ingestion was part of an earlier plan and
+# has been removed. If you bring back an NGO/community feature later, the
+# old ngo_csv_importer.py logic (CSV column mapping, etc.) is a reasonable
+# starting point to resurrect from version history.
