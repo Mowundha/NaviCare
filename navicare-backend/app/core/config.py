@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # --- Firebase (phone OTP) ---
     FIREBASE_CREDENTIALS_PATH: str = ""  # path to service account json, or unset if using ADC
 
+        # --- Caretaker Pricing ---
+    CARETAKER_DAILY_RATE: float = 800.0
+    
     # --- Payments ---
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""

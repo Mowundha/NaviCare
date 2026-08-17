@@ -36,15 +36,29 @@ def query_transit(user_id: str, payload: AgentQueryTransitRequest) -> AgentRespo
         )
     )
 
-    train_count = sum(1 for o in options if o.mode == "train")
-    bus_count = sum(1 for o in options if o.mode == "bus")
+    train_modes = {"TRAIN", "SUBWAY", "RAIL", "LIGHT_RAIL"}
+
+    def _journey_modes(journey):
+        return {leg.mode.upper() for leg in journey.legs if leg.mode}
+
+    train_count = sum(1 for o in options if _journey_modes(o) & train_modes)
+    bus_count = sum(1 for o in options if "BUS" in _journey_modes(o))
 
     if options:
         earliest = options[0]
-        response_text = (
-            f"I found {train_count} train and {bus_count} bus option(s) to {payload.destination_name}. "
-            f"The earliest is {earliest.name}, departing at {earliest.boarding_time}."
-        )
+        journey_label = " + ".join(
+            dict.fromkeys(leg.mode for leg in earliest.legs if leg.mode and leg.mode != "WALK")
+        ) or "a route"
+        if earliest.departure_time:
+            response_text = (
+                f"I found {train_count} train and {bus_count} bus option(s) to {payload.destination_name}. "
+                f"The earliest is {journey_label}, departing at {earliest.departure_time.strftime('%I:%M %p')}."
+            )
+        else:
+            response_text = (
+                f"I found {train_count} train and {bus_count} bus option(s) to {payload.destination_name}. "
+                f"The earliest is {journey_label}."
+            )
     else:
         response_text = f"I couldn't find any transit options to {payload.destination_name} right now."
 

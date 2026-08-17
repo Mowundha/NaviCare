@@ -36,19 +36,64 @@ class TravelPlanStatusUpdate(BaseModel):
 class TransitSearchRequest(BaseModel):
     source_latitude: float
     source_longitude: float
+
     destination_name: str
-    destination_latitude: float | None = None
-    destination_longitude: float | None = None
+    destination_latitude: float
+    destination_longitude: float
+
     travel_date: date | None = None
+    departure_time: datetime | None = None
+
+    preference: str = "LESS_WALKING"
 
 
-class TransitOption(BaseModel):
-    transit_id: str | None = None
-    mode: str  # 'train' | 'bus'
-    name: str
-    boarding_time: str
-    duration: str
-    arrival_time: str
-    wheelchair_lift_working: bool | None = None
-    tactile_flooring_present: bool | None = None
-    specialized_coach_available: bool | None = None
+
+class TransitLocation(BaseModel):
+    name: str | None = None
+    latitude: float
+    longitude: float
+
+
+class TransitLeg(BaseModel):
+    mode: str
+    name: str | None = None
+
+    departure_location: TransitLocation
+    arrival_location: TransitLocation
+
+    departure_time: datetime | None = None
+    arrival_time: datetime | None = None
+    duration_seconds: int | None = None
+
+    distance_meters: int | None = None
+
+    departure_stop: str | None = None
+    arrival_stop: str | None = None
+
+    wheelchair_accessible: bool | None = None
+    accessibility_status: str = "UNKNOWN"
+
+    instructions: str | None = None
+
+
+class TransitJourney(BaseModel):
+    journey_id: str
+
+    origin: TransitLocation
+    destination: TransitLocation
+
+    departure_time: datetime | None = None
+    arrival_time: datetime | None = None
+
+    duration_seconds: int | None = None
+    distance_meters: int | None = None
+
+    number_of_transfers: int = 0
+
+    legs: list[TransitLeg] = Field(default_factory=list)
+
+    accessibility_summary: list[str] = Field(default_factory=list)
+
+    navigation_url: str | None = None
+
+    provider: str = "google_routes"

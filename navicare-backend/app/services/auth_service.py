@@ -45,9 +45,20 @@ def register_user(phone_number: str, payload: UserCreate, password: str) -> User
 def register_caretaker(phone_number: str, payload: CaretakerCreate, password: str) -> Caretaker:
     if caretaker_repo.find_one_by("phone_number", phone_number):
         raise ValueError("An account with this phone number already exists")
+
     data = payload.model_dump()
     data["phone_number"] = phone_number
-    caretaker = Caretaker(caretaker_id=caretaker_repo.generate_id(), hashed_password=hash_password(password), **data)
+
+    # NaviCare controls caretaker pricing.
+    data["hourly_rate"] = None
+    data["daily_rate"] = settings.CARETAKER_DAILY_RATE
+
+    caretaker = Caretaker(
+        caretaker_id=caretaker_repo.generate_id(),
+        hashed_password=hash_password(password),
+        **data
+    )
+
     return caretaker_repo.create(caretaker)
 
 

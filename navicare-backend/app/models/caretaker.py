@@ -39,8 +39,6 @@ class CaretakerCreate(BaseModel):
     phone_number: str
     gender: str
     Email: EmailStr
-    hourly_rate: float | None = None
-    daily_rate: float | None = None
     supported_disabilities: list[str] = Field(default_factory=list)
 
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from app.models.enums import VerificationStatus
+from app.models.enums import PlaceVerificationStatus, VerificationStatus
 
 # ---------------------------------------------------------------------------
 # Data Models
@@ -50,7 +50,7 @@ class Place(BaseModel):
     has_accessible_restrooms: bool
     has_braille_menu: bool
     has_audio_guides: bool
-    verification_status: VerificationStatus
+    verification_status: PlaceVerificationStatus
     latitude: float
     longitude: float
 
@@ -159,7 +159,7 @@ def recommend_places(
     candidates: List[RankedPlace] = []
 
     for place in places:
-        if place.verification_status != VerificationStatus.VERIFIED:
+        if place.verification_status != PlaceVerificationStatus.VERIFIED:
              continue
         distance = haversine_distance(
             user.Current_latitude,
@@ -305,24 +305,28 @@ if __name__ == "__main__":
             place_id="P001", name="Marina Accessible Cafe", category="Restaurant",
             has_wheelchair_ramp=True, has_accessible_restrooms=True,
             has_braille_menu=True, has_audio_guides=False,
+            verification_status=PlaceVerificationStatus.VERIFIED,
             latitude=13.0500, longitude=80.2824,
         ),
         Place(
             place_id="P002", name="Hotel Comfort Stay", category="Hotel",
             has_wheelchair_ramp=True, has_accessible_restrooms=True,
             has_braille_menu=False, has_audio_guides=False,
+            verification_status=PlaceVerificationStatus.VERIFIED,
             latitude=13.0900, longitude=80.2750,
         ),
         Place(
             place_id="P003", name="City Heritage Museum", category="Tourist Spot",
             has_wheelchair_ramp=True, has_accessible_restrooms=True,
             has_braille_menu=True, has_audio_guides=True,
+            verification_status=PlaceVerificationStatus.VERIFIED,
             latitude=13.0605, longitude=80.2496,
         ),
         Place(
             place_id="P004", name="Far Away Restroom", category="Restroom",
             has_wheelchair_ramp=True, has_accessible_restrooms=True,
             has_braille_menu=False, has_audio_guides=False,
+            verification_status=PlaceVerificationStatus.VERIFIED,
             latitude=13.5000, longitude=80.5000,  # >10km away, should be filtered out
         ),
     ]
@@ -407,6 +411,7 @@ if __name__ == "__main__":
         Caretaker(
             caretaker_id="C005", full_name="Vikram Das", gender="Male",
             supported_disabilities=["auditory", "elderly_care"],
+            verification_status=VerificationStatus.VERIFIED,
             is_available=True,
             latitude=13.0850, longitude=80.2720,
         )
