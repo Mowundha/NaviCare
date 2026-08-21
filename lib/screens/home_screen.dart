@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'accessibility_preferences_screen.dart';
 import 'find_caretaker_screen.dart';
-import 'community_main_screen.dart'; // Import your Community Main Screen file
+import 'community_main_screen.dart';
 import 'home_location_map_screen.dart';
 import 'tourist_place_detail_page.dart';
+import 'ai_travel_agent_page.dart'; // Import your AI Travel Agent Page file
 
 // Data model for tourist places
 class _TouristPlace {
@@ -235,7 +236,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // CATEGORY ICONS
+              // CATEGORY ICONS (Added AI Agent button between Home and Caretaker)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -252,6 +253,18 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                   _CategoryIcon(
+                    icon: Icons.smart_toy_rounded,
+                    label: "AI Agent",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AITravelAgentPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _CategoryIcon(
                     icon: Icons.people,
                     label: "Caretaker",
                     onTap: () => _showCaretakerDialog(context),
@@ -259,7 +272,6 @@ class HomeScreen extends StatelessWidget {
                   _CategoryIcon(
                     icon: Icons.group,
                     label: "Community",
-                    // Navigates to CommunityMainScreen here:
                     onTap: () {
                       Navigator.push(
                         context,
