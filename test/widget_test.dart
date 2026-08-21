@@ -7,26 +7,32 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:accessease/screens/edit_profile_screen.dart';
+import 'package:accessease/screens/profile_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('profile displays the edit control', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ProfileScreen()));
+
+    expect(find.text('Aarav'), findsOneWidget);
+    expect(find.byTooltip('Edit profile'), findsOneWidget);
+  });
+
+  testWidgets('edit profile form displays personal detail fields',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: Center(child: Text('0')),
+      home: EditProfileScreen(
+        details: ProfileDetails(
+          name: 'Aarav',
+          email: 'aarav@example.com',
+          phone: '+91 9876543210',
+        ),
       ),
     ));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.text('Email Address'), findsOneWidget);
+    expect(find.text('Phone Number'), findsOneWidget);
   });
 }
