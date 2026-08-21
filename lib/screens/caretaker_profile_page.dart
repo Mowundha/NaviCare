@@ -1,7 +1,41 @@
 import 'package:flutter/material.dart';
+import '../services/token_storage.dart';
+import 'edit_caretaker_profile_screen.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  CaretakerDetails _details = const CaretakerDetails(
+    name: 'Sudhiksha',
+    email: 'sudhiksha@example.com',
+    phone: '+91 9876543210',
+    location: 'Bangalore, Karnataka',
+    experience: '8 Years',
+  );
+
+  Future<void> _editProfile() async {
+    final updatedDetails = await Navigator.push<CaretakerDetails>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditCaretakerProfileScreen(details: _details),
+      ),
+    );
+
+    if (updatedDetails != null && mounted) {
+      setState(() => _details = updatedDetails);
+    }
+  }
+
+  Future<void> _logOut() async {
+    await TokenStorage.instance.clearToken();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +44,11 @@ class ProfilePage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Profile',
+            style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -32,12 +70,16 @@ class ProfilePage extends StatelessWidget {
                     child: Icon(Icons.person, color: Colors.white, size: 50),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Sudhiksha', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(_details.name,
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  const Text('Elderly Care Specialist', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  const Text('Elderly Care Specialist',
+                      style: TextStyle(fontSize: 14, color: Colors.grey)),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.yellow.shade100,
                       borderRadius: BorderRadius.circular(8),
@@ -47,12 +89,15 @@ class ProfilePage extends StatelessWidget {
                       children: const [
                         Icon(Icons.star, color: Colors.orange, size: 16),
                         SizedBox(width: 4),
-                        Text('4.6 (128 reviews)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('4.6 (128 reviews)',
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text('Caretaker ID: CTK7890', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Text('Caretaker ID: CTK7890',
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             ),
@@ -75,7 +120,9 @@ class ProfilePage extends StatelessWidget {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Today's Performance", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Text("Today's Performance",
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 13)),
                       Icon(Icons.trending_up, color: Colors.white70),
                     ],
                   ),
@@ -85,17 +132,29 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       Column(
                         children: const [
-                          Text('4', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text('4',
+                              style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                           SizedBox(height: 4),
-                          Text('Jobs Completed', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                          Text('Jobs Completed',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.white70)),
                         ],
                       ),
                       Container(width: 1, height: 50, color: Colors.white30),
                       Column(
                         children: const [
-                          Text('5h 30m', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text('5h 30m',
+                              style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                           SizedBox(height: 4),
-                          Text('Hours Worked', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                          Text('Hours Worked',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.white70)),
                         ],
                       ),
                     ],
@@ -117,25 +176,34 @@ class ProfilePage extends StatelessWidget {
                 children: [
                   Column(
                     children: const [
-                      Text('5h 30m', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('5h 30m',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       SizedBox(height: 4),
-                      Text('Total Hours', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('Total Hours',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                   Container(width: 1, height: 40, color: Colors.grey.shade300),
                   Column(
                     children: const [
-                      Text('4  ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('4  ',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       SizedBox(height: 4),
-                      Text('Total Jobs', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('Total Jobs',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                   Container(width: 1, height: 40, color: Colors.grey.shade300),
                   Column(
                     children: const [
-                      Text('₹1,250', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('₹1,250',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       SizedBox(height: 4),
-                      Text('Earnings', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text('Earnings',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ],
@@ -153,12 +221,14 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Personal Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text('Personal Information',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Email', 'sudhiksha@example.com'),
-                  _buildInfoRow('Phone', '+91 9876543210'),
-                  _buildInfoRow('Location', 'Bangalore, Karnataka'),
-                  _buildInfoRow('Experience', '8 Years'),
+                  _buildInfoRow('Email', _details.email),
+                  _buildInfoRow('Phone', _details.phone),
+                  _buildInfoRow('Location', _details.location),
+                  _buildInfoRow('Experience', _details.experience),
                 ],
               ),
             ),
@@ -174,7 +244,9 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Services Offered', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text('Services Offered',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -195,7 +267,7 @@ class ProfilePage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _editProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5B40F4),
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -203,14 +275,16 @@ class ProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text('Edit Profile',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: _logOut,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   side: const BorderSide(color: Color(0xFF5B40F4)),
@@ -218,7 +292,9 @@ class ProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Logout', style: TextStyle(color: Color(0xFF5B40F4), fontWeight: FontWeight.bold)),
+                child: const Text('Logout',
+                    style: TextStyle(
+                        color: Color(0xFF5B40F4), fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -234,7 +310,9 @@ class ProfilePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -249,7 +327,10 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Text(
         service,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5B40F4)),
+        style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF5B40F4)),
       ),
     );
   }
