@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'services/token_storage.dart';
 
-
 // Screens
 import 'screens/event_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/ai_travel_agent_page.dart';
 
 void main() {
   runApp(const AccessEaseApp());
@@ -73,6 +73,10 @@ class AppBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.smart_toy_rounded),
+          label: 'AI Agent',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
         BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Events'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
@@ -93,6 +97,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
+    const AITravelAgentPage(),
     const ExploreScreen(),
     const EventsScreen(),
     const ProfileScreen(), // Removed SavedScreen

@@ -5,7 +5,6 @@ import 'find_caretaker_screen.dart';
 import 'community_main_screen.dart';
 import 'home_location_map_screen.dart';
 import 'tourist_place_detail_page.dart';
-import 'ai_travel_agent_page.dart'; // Import your AI Travel Agent Page file
 
 // Data model for tourist places
 class _TouristPlace {
@@ -32,98 +31,112 @@ class HomeScreen extends StatelessWidget {
       location: "Agra, Uttar Pradesh",
       description:
           "A UNESCO World Heritage Site, the Taj Mahal is a white marble mausoleum built by Emperor Shah Jahan in memory of his wife Mumtaz Mahal.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Taj-Mahal.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Taj-Mahal.jpg",
     ),
     _TouristPlace(
       name: "Jaipur City Palace",
       location: "Jaipur, Rajasthan",
       description:
           "A stunning blend of Mughal and Rajput architecture, the City Palace is a historic royal complex in Jaipur.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jaipur%20City%20Palace%2C%20Rajasthan.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jaipur%20City%20Palace%2C%20Rajasthan.jpg",
     ),
     _TouristPlace(
       name: "Gateway of India",
       location: "Mumbai, Maharashtra",
       description:
           "An iconic arch monument overlooking the Arabian Sea and one of Mumbai's most famous landmarks.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gateway%20of%20India%2C%20Mumbai%2C%20India.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gateway%20of%20India%2C%20Mumbai%2C%20India.jpg",
     ),
     _TouristPlace(
       name: "Golden Temple",
       location: "Amritsar, Punjab",
       description:
           "The Golden Temple, also known as Harmandir Sahib, is a famous Sikh shrine surrounded by a peaceful sacred pool.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Golden%20Temple%20%28Amritsar%29.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Golden%20Temple%20%28Amritsar%29.jpg",
     ),
     _TouristPlace(
       name: "Charminar",
       location: "Hyderabad, Telangana",
       description:
           "Built in 1591, Charminar is an iconic monument of Hyderabad featuring four impressive minarets.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Charminar%20of%20Hyderabad%20Telangana.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Charminar%20of%20Hyderabad%20Telangana.jpg",
     ),
     _TouristPlace(
       name: "Mysore Palace",
       location: "Mysuru, Karnataka",
       description:
           "A magnificent palace famous for its Indo-Saracenic architecture and spectacular illumination.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mysore%20Palace%2C%20Mysuru.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mysore%20Palace%2C%20Mysuru.jpg",
     ),
     _TouristPlace(
       name: "India Gate",
       location: "New Delhi",
       description:
           "A famous war memorial in New Delhi dedicated to Indian soldiers who died during the First World War.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/India%20gate%20new%20delhi.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/India%20gate%20new%20delhi.jpg",
     ),
     _TouristPlace(
       name: "Meenakshi Temple",
       location: "Madurai, Tamil Nadu",
       description:
           "A historic temple famous for its colorful Dravidian architecture and magnificent gopurams.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Meenakshi%20Temple%2C%20Shaivism%2C%20Madurai%2C%20India.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Meenakshi%20Temple%2C%20Shaivism%2C%20Madurai%2C%20India.jpg",
     ),
     _TouristPlace(
       name: "Hawa Mahal",
       location: "Jaipur, Rajasthan",
       description:
           "Known as the Palace of Winds, Hawa Mahal is famous for its distinctive facade and numerous windows.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Hawa%20Mahal.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Hawa%20Mahal.jpg",
     ),
     _TouristPlace(
       name: "Qutub Minar",
       location: "Delhi",
       description:
           "A UNESCO World Heritage Site and one of India's most famous historical monuments.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/QutubMInar.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/QutubMInar.jpg",
     ),
     _TouristPlace(
       name: "Ajanta Caves",
       location: "Maharashtra",
       description:
           "Ancient rock-cut Buddhist caves famous for their murals, sculptures and historical significance.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ajanta%20Caves.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ajanta%20Caves.jpg",
     ),
     _TouristPlace(
       name: "Konark Sun Temple",
       location: "Odisha",
       description:
           "A magnificent 13th-century temple designed as a colossal chariot dedicated to the Sun God.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/KONARK%20Sun%20Temple.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/KONARK%20Sun%20Temple.jpg",
     ),
     _TouristPlace(
       name: "Victoria Memorial",
       location: "Kolkata, West Bengal",
       description:
           "A grand marble monument and museum located in the heart of Kolkata.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Victoria%20Memorial%2C%20Kolkata%20India.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Victoria%20Memorial%2C%20Kolkata%20India.jpg",
     ),
     _TouristPlace(
       name: "Lotus Temple",
       location: "Delhi",
       description:
           "A famous Bahá'í House of Worship designed in the shape of a beautiful lotus flower.",
-      imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Lotus%20Temple%2C%20Delhi.jpg",
+      imageUrl:
+          "https://commons.wikimedia.org/wiki/Special:Redirect/file/Lotus%20Temple%2C%20Delhi.jpg",
     ),
   ];
 
@@ -174,9 +187,9 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: AppTheme.primary,
         foregroundColor: AppTheme.white,
         automaticallyImplyLeading: false,
-        centerTitle: false,  
-        toolbarHeight: 80, 
-        titleSpacing: 16,   
+        centerTitle: false,
+        toolbarHeight: 80,
+        titleSpacing: 16,
         title: const Text(
           "Hello Aarav!!",
           style: TextStyle(
@@ -203,7 +216,7 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              icon: const Icon(Icons.notifications_active, size: 18), 
+              icon: const Icon(Icons.notifications_active, size: 18),
               label: const Text(
                 "SOS",
                 style: TextStyle(
@@ -216,148 +229,140 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: _buildHomeBody(context),
+      ),
+    );
+  }
+
+  Widget _buildHomeBody(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // SEARCH BAR
+          TextField(
+            decoration: InputDecoration(
+              hintText: "Search accessible places...",
+              prefixIcon: const Icon(Icons.search),
+              filled: true,
+              fillColor: AppTheme.neutral200,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // CATEGORY ICONS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // SEARCH BAR
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Search accessible places...",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppTheme.neutral200,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // CATEGORY ICONS (Added AI Agent button between Home and Caretaker)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _CategoryIcon(
-                    icon: Icons.home,
-                    label: "My Home",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HomeLocationMapScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _CategoryIcon(
-                    icon: Icons.smart_toy_rounded,
-                    label: "AI Agent",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AITravelAgentPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _CategoryIcon(
-                    icon: Icons.people,
-                    label: "Caretaker",
-                    onTap: () => _showCaretakerDialog(context),
-                  ),
-                  _CategoryIcon(
-                    icon: Icons.group,
-                    label: "Community",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CommunityMainScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // ACCESSIBILITY PREFERENCES
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Accessibility Preferences",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.white,
-                      ),
+              _CategoryIcon(
+                icon: Icons.home,
+                label: "My Home",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HomeLocationMapScreen(),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Customize your experience based on accessibility needs",
-                      style: TextStyle(
-                        color: AppTheme.white,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.white,
-                        foregroundColor: AppTheme.primary,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AccessibilityPreferencesScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text("Set Preferences"),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-              const SizedBox(height: 24),
-
-              // RECOMMENDED PLACES HEADER
-              const Text(
-                "Recommended Tourist Places in India",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              _CategoryIcon(
+                icon: Icons.people,
+                label: "Caretaker",
+                onTap: () => _showCaretakerDialog(context),
               ),
-              const SizedBox(height: 12),
-
-              // TOURIST PLACES LISTVIEW
-              ListView.builder(
-                itemCount: _touristPlaces.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  final place = _touristPlaces[index];
-                  return _PlaceCard(
-                    name: place.name,
-                    location: place.location,
-                    description: place.description,
-                    imageUrl: place.imageUrl,
+              _CategoryIcon(
+                icon: Icons.group,
+                label: "Community",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CommunityMainScreen(),
+                    ),
                   );
                 },
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 24),
+
+          // ACCESSIBILITY PREFERENCES
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Accessibility Preferences",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Customize your experience based on accessibility needs",
+                  style: TextStyle(
+                    color: AppTheme.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.white,
+                    foregroundColor: AppTheme.primary,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AccessibilityPreferencesScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text("Set Preferences"),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // RECOMMENDED PLACES HEADER
+          const Text(
+            "Recommended Tourist Places in India",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // TOURIST PLACES LISTVIEW
+          ListView.builder(
+            itemCount: _touristPlaces.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final place = _touristPlaces[index];
+              return _PlaceCard(
+                name: place.name,
+                location: place.location,
+                description: place.description,
+                imageUrl: place.imageUrl,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
