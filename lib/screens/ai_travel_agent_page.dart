@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../theme/app_theme.dart';
-import 'accessibility_preferences_screen.dart';
 import 'find_caretaker_screen.dart';
-import 'community_main_screen.dart';
-import 'home_location_map_screen.dart';
 import 'tourist_place_detail_page.dart';
 
 class AIMessage {
