@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'caretaker_home_screen.dart';
+import '../screens/caretaker_home_screen.dart';
 
 class CaretakerCompletedBookingScreen extends StatefulWidget {
   const CaretakerCompletedBookingScreen({super.key});

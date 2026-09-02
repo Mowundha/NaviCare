@@ -16,7 +16,7 @@ class _CaretakerHomeScreenState extends State<CaretakerHomeScreen> {
 
   final List<Widget> _screens = [
     const CaretakerDashboardTab(),
-    const Center(child: Text('Bookings Screen')),
+    const CaretakerBookingsTab(),
     const CaretakerEarningsScreen(),
     const CaretakerProfilePage(),
   ];
@@ -57,8 +57,176 @@ class CaretakerDashboardTab extends StatefulWidget {
   State<CaretakerDashboardTab> createState() => _CaretakerDashboardTabState();
 }
 
+class CaretakerBookingsTab extends StatefulWidget {
+  const CaretakerBookingsTab({super.key});
+
+  @override
+  State<CaretakerBookingsTab> createState() => _CaretakerBookingsTabState();
+}
+
+class _CaretakerBookingsTabState extends State<CaretakerBookingsTab> {
+  final List<Map<String, String>> _bookings = [
+    {
+      'service': 'Elder Care',
+      'customer': 'Ramesh Kumar',
+      'date': 'Today, 10:30 AM',
+      'location': 'Koramangala, Bengaluru',
+      'amount': '₹350',
+      'status': 'Pending',
+    },
+    {
+      'service': 'Patient Care',
+      'customer': 'Anita Sharma',
+      'date': 'Today, 1:00 PM',
+      'location': 'Indiranagar, Bengaluru',
+      'amount': '₹500',
+      'status': 'Pending',
+    },
+    {
+      'service': 'Post-Surgery Care',
+      'customer': 'Meera Iyer',
+      'date': 'Tomorrow, 9:00 AM',
+      'location': 'HSR Layout, Bengaluru',
+      'amount': '₹600',
+      'status': 'Pending',
+    },
+  ];
+
+  void _updateBooking(int index, String status) {
+    setState(() => _bookings[index]['status'] = status);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Booking ${status.toLowerCase()}')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Bookings',
+            style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Text('Booking Requests',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          const Text('Review requests and manage your schedule',
+              style: TextStyle(color: Colors.black54)),
+          const SizedBox(height: 18),
+          ..._bookings.asMap().entries.map((entry) {
+            final index = entry.key;
+            final booking = entry.value;
+            final isPending = booking['status'] == 'Pending';
+            final isAccepted = booking['status'] == 'Accepted';
+            final statusColor = isPending
+                ? Colors.orange
+                : isAccepted
+                    ? Colors.green
+                    : Colors.red;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFFE9E5FF),
+                        child: Icon(Icons.person, color: Color(0xFF5B40F4)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(booking['service']!,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 3),
+                            Text(booking['customer']!,
+                                style: const TextStyle(color: Colors.black54)),
+                          ],
+                        ),
+                      ),
+                      Text(booking['amount']!,
+                          style: const TextStyle(
+                              color: Color(0xFF5B40F4),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  _bookingInfo(Icons.schedule, booking['date']!),
+                  const SizedBox(height: 8),
+                  _bookingInfo(Icons.location_on_outlined, booking['location']!),
+                  const SizedBox(height: 14),
+                  if (isPending)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _updateBooking(index, 'Rejected'),
+                            style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red)),
+                            child: const Text('Reject'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _updateBooking(index, 'Accepted'),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF5B40F4),
+                                foregroundColor: Colors.white),
+                            child: const Text('Accept'),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(booking['status']!,
+                        style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _bookingInfo(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.black54),
+        const SizedBox(width: 8),
+        Expanded(child: Text(value)),
+      ],
+    );
+  }
+}
+
 class _CaretakerDashboardTabState extends State<CaretakerDashboardTab> {
   bool _isOnline = true;
+  String _caretakerName = 'Caretaker';
 
   final List<Map<String, dynamic>> _serviceRequests = [
     {
@@ -112,24 +280,43 @@ class _CaretakerDashboardTabState extends State<CaretakerDashboardTab> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadCaretakerName();
+  }
+
+  Future<void> _loadCaretakerName() async {
+    final name = await TokenStorage.instance.getUserName();
+    if (mounted && name != null && name.trim().isNotEmpty) {
+      setState(() => _caretakerName = name);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF5141D8),
         elevation: 0,
-        leading: IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black87),
-            onPressed: () {}),
-        title: const Text('Hello Sudhiksha! 👋',
-            style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 18)),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.accessibility_new_rounded,
+              color: Color(0xFF5141D8), size: 22),
+        ),
+        title: Text('Hello $_caretakerName!',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18)),
         actions: [
           IconButton(
               icon: const Icon(Icons.notifications_outlined,
-                  color: Colors.black87),
+                  color: Colors.white),
               onPressed: () {}),
         ],
       ),
@@ -391,12 +578,48 @@ class CaretakerProfilePage extends StatefulWidget {
 
 class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
   CaretakerDetails _details = const CaretakerDetails(
-    name: 'Sudhiksha',
-    email: 'sudhiksha@example.com',
-    phone: '+91 9876543210',
-    location: 'Bangalore, Karnataka',
-    experience: '8 Years',
+    name: 'Caretaker',
+    email: '',
+    phone: '',
+    location: 'Not provided',
+    experience: '0 Years',
+    specialization: 'Not provided',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await TokenStorage.instance.getCaretakerProfile();
+    if (!mounted || profile == null) return;
+
+    setState(() {
+      _details = CaretakerDetails(
+        name: _profileText(profile, 'full_name', 'Caretaker'),
+        email: _profileText(profile, 'Email'),
+        phone: _profileText(profile, 'phone_number'),
+        location: _profileText(profile, 'location', 'Not provided'),
+        experience:
+            '${profile['years_of_experience'] ?? 0} Years',
+        specialization:
+            _profileText(profile, 'specialization', 'Not provided'),
+      );
+    });
+  }
+
+  String _profileText(
+    Map<String, dynamic> profile,
+    String key, [
+    String fallback = '',
+  ]) {
+    final value = profile[key];
+    return value == null || value.toString().trim().isEmpty
+        ? fallback
+        : value.toString();
+  }
 
   Future<void> _editProfile() async {
     final updatedDetails = await Navigator.push<CaretakerDetails>(
@@ -408,6 +631,14 @@ class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
 
     if (updatedDetails != null && mounted) {
       setState(() => _details = updatedDetails);
+      await TokenStorage.instance.saveCaretakerProfile({
+        'full_name': updatedDetails.name,
+        'Email': updatedDetails.email,
+        'phone_number': updatedDetails.phone,
+        'location': updatedDetails.location,
+        'years_of_experience': updatedDetails.experience,
+        'specialization': updatedDetails.specialization,
+      });
     }
   }
 
@@ -454,8 +685,8 @@ class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
                       style: const TextStyle(
                           fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  const Text('Elderly Care Specialist',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
+                    Text(_details.specialization,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   const SizedBox(height: 12),
                   Container(
                     padding:
@@ -569,10 +800,7 @@ class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildServiceTag('Elderly Care'),
-                      _buildServiceTag('Patient Care'),
-                      _buildServiceTag('Post-Surgery'),
-                      _buildServiceTag('Mobility Support'),
+                      _buildServiceTag(_details.specialization),
                     ],
                   ),
                 ],
@@ -652,3 +880,59 @@ class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

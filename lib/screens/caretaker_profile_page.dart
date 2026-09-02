@@ -1,336 +1,211 @@
 import 'package:flutter/material.dart';
-import '../services/token_storage.dart';
-import 'edit_caretaker_profile_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
-
-  @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  CaretakerDetails _details = const CaretakerDetails(
-    name: 'Sudhiksha',
-    email: 'sudhiksha@example.com',
-    phone: '+91 9876543210',
-    location: 'Bangalore, Karnataka',
-    experience: '8 Years',
-  );
-
-  Future<void> _editProfile() async {
-    final updatedDetails = await Navigator.push<CaretakerDetails>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditCaretakerProfileScreen(details: _details),
-      ),
-    );
-
-    if (updatedDetails != null && mounted) {
-      setState(() => _details = updatedDetails);
-    }
-  }
-
-  Future<void> _logOut() async {
-    await TokenStorage.instance.clearToken();
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-  }
+class CaretakerProfilePage extends StatelessWidget {
+  const CaretakerProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Profile',
-            style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 18)),
+        title: Text('Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         centerTitle: true,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Profile Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Color(0xFF6B51FF),
-                    child: Icon(Icons.person, color: Colors.white, size: 50),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              children: [
+                // Avatar, Name, Rating
+                const CircleAvatar(
+                  radius: 44,
+                  backgroundColor: Color(0xFF4F46E5),
+                  child: Icon(Icons.person, size: 50, color: Colors.white),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Sudhiksha',
+                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Elderly Care Specialist',
+                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 16),
-                  Text(_details.name,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  const Text('Elderly Care Specialist',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.yellow.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '4.8 (128 reviews)',
+                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Metrics summary
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.star, color: Colors.orange, size: 16),
-                        SizedBox(width: 4),
-                        Text('4.6 (128 reviews)',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildMetric('5h 30m', 'Hours Worked'),
+                        Container(width: 1, height: 35, color: Colors.grey.shade300),
+                        _buildMetric('4', 'Jobs Completed'),
+                        Container(width: 1, height: 35, color: Colors.grey.shade300),
+                        _buildMetric('₹1,250', 'Total Earnings'),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text('Caretaker ID: CTK7890',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Today's Stats Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6B51FF), Color(0xFF4A30D8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Today's Performance",
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 13)),
-                      Icon(Icons.trending_up, color: Colors.white70),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: const [
-                          Text('4',
-                              style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          SizedBox(height: 4),
-                          Text('Jobs Completed',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.white70)),
-                        ],
-                      ),
-                      Container(width: 1, height: 50, color: Colors.white30),
-                      Column(
-                        children: const [
-                          Text('5h 30m',
-                              style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          SizedBox(height: 4),
-                          Text('Hours Worked',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.white70)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-            // Overall Stats
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: const [
-                      Text('5h 30m',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('Total Hours',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  Container(width: 1, height: 40, color: Colors.grey.shade300),
-                  Column(
-                    children: const [
-                      Text('4  ',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('Total Jobs',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  Container(width: 1, height: 40, color: Colors.grey.shade300),
-                  Column(
-                    children: const [
-                      Text('₹1,250',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('Earnings',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Personal Information
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Personal Information',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Email', _details.email),
-                  _buildInfoRow('Phone', _details.phone),
-                  _buildInfoRow('Location', _details.location),
-                  _buildInfoRow('Experience', _details.experience),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Services Offered
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Services Offered',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildServiceTag('Elderly Care'),
-                      _buildServiceTag('Patient Care'),
-                      _buildServiceTag('Post-Surgery'),
-                      _buildServiceTag('Mobility Support'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Action Buttons
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _editProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5B40F4),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                // Personal Info Card
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Personal Information',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        const Divider(height: 20),
+                        _buildInfoRow('Email', 'sudhiksha@example.com'),
+                        _buildInfoRow('Phone', '+91 9876543210'),
+                        _buildInfoRow('Location', 'Bangalore, Karnataka'),
+                        _buildInfoRow('Experience', '8 Years'),
+                        _buildInfoRow('Caretaker ID', 'CTK7890'),
+                      ],
+                    ),
                   ),
                 ),
-                child: const Text('Edit Profile',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: _logOut,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: const BorderSide(color: Color(0xFF5B40F4)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 16),
+
+                // Services Offered Card
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Services Offered',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildServiceTag('Elderly Care'),
+                            _buildServiceTag('Patient Care'),
+                            _buildServiceTag('Post-Surgery'),
+                            _buildServiceTag('Mobility Support'),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: const Text('Logout',
-                    style: TextStyle(
-                        color: Color(0xFF5B40F4), fontWeight: FontWeight.bold)),
-              ),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4F46E5),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF4F46E5),
+                      side: const BorderSide(color: Color(0xFF4F46E5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text('Logout', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildMetric(String value, String title) {
+    return Column(
+      children: [
+        Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 2),
+        Text(title, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 11)),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(title, style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 13)),
+          Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13)),
         ],
       ),
     );
   }
 
-  Widget _buildServiceTag(String service) {
+  Widget _buildServiceTag(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF5B40F4).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        service,
-        style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF5B40F4)),
+        label,
+        style: GoogleFonts.poppins(color: const Color(0xFF4F46E5), fontSize: 12, fontWeight: FontWeight.w500),
       ),
     );
   }

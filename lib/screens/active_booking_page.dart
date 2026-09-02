@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'caretaker_completed_booking_screen.dart';
+import '../screens/caretaker_completed_booking_screen.dart';
 
 class ActiveBookingScreen extends StatefulWidget {
   final Map<String, dynamic> bookingData;

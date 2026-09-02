@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import 'book_caretaker_screen.dart';
+import '../../theme/app_theme.dart';
+import '../screens/book_caretaker_screen.dart';
 
 class CaretakerDetailsScreen extends StatelessWidget {
   final Map<String, String>? caretaker;
@@ -142,7 +142,7 @@ class CaretakerDetailsScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const BookCaretakerScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => BookCaretakerScreen(caretaker: caretaker)));
                   },
                   child: const Text('Proceed to Booking', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),

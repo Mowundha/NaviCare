@@ -6,6 +6,7 @@ class CaretakerDetails {
   final String phone;
   final String location;
   final String experience;
+  final String specialization;
 
   const CaretakerDetails({
     required this.name,
@@ -13,6 +14,7 @@ class CaretakerDetails {
     required this.phone,
     required this.location,
     required this.experience,
+    required this.specialization,
   });
 }
 
@@ -75,6 +77,7 @@ class _EditCaretakerProfileScreenState
         phone: _phoneController.text.trim(),
         location: _locationController.text.trim(),
         experience: _experienceController.text.trim(),
+        specialization: widget.details.specialization,
       ),
     );
   }

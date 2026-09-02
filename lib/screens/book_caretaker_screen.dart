@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'booking_summary_screen.dart';
-import 'map_picker_screen.dart'; // Import the Map Picker Screen
+import 'map_picker_screen.dart';
 
 class BookCaretakerScreen extends StatefulWidget {
   final Map<String, String>? caretaker;
-
   const BookCaretakerScreen({super.key, this.caretaker});
 
   @override
@@ -17,352 +16,268 @@ class _BookCaretakerScreenState extends State<BookCaretakerScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
   final TextEditingController _durationController = TextEditingController(text: '4');
   final TextEditingController _requirementsController = TextEditingController();
-
-  // Location Mode selection: 'detect' or 'manual'
   String _locationMode = 'detect';
-  String _detectedLocation = '123 Maple St, City (Tap Open Map to change)';
-
-  // Manual location text controllers
+  String _detectedLocation = '123 Maple St, City';
   final TextEditingController _flatController = TextEditingController();
   final TextEditingController _streetController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _stateController = TextEditingController();
-  final TextEditingController _nationController = TextEditingController();
-  final TextEditingController _mobileController = TextEditingController();
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime today = DateTime.now();
-    final DateTime currentDateOnly = DateTime(today.year, today.month, today.day);
-
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate.isBefore(currentDateOnly) ? currentDateOnly : _selectedDate,
-      firstDate: currentDateOnly,
-      lastDate: currentDateOnly.add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primary,
-              onPrimary: AppTheme.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      initialDate: _selectedDate,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primary,
-              onPrimary: AppTheme.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
+    final TimeOfDay? picked = await showTimePicker(context: context, initialTime: _selectedTime);
+    if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  @override
-  void dispose() {
-    _durationController.dispose();
-    _requirementsController.dispose();
-    _flatController.dispose();
-    _streetController.dispose();
-    _areaController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _nationController.dispose();
-    _mobileController.dispose();
-    super.dispose();
+  String get _formattedDate {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${_selectedDate.day} ${months[_selectedDate.month - 1]} ${_selectedDate.year}';
+  }
+
+  String get _formattedTime => _selectedTime.format(context);
+
+  String get _resolvedLocation {
+    if (_locationMode == 'detect') return _detectedLocation;
+    final parts = [_flatController.text, _streetController.text, _areaController.text, _cityController.text]
+        .where((s) => s.trim().isNotEmpty).toList();
+    return parts.isNotEmpty ? parts.join(', ') : 'Enter location above';
+  }
+
+  int get _durationHours => int.tryParse(_durationController.text) ?? 4;
+  double get _serviceCharge => _durationHours * 375.0;
+  double get _convenienceFee => 18.0;
+  double get _gst => _serviceCharge * 0.18;
+  double get _total => _serviceCharge + _convenienceFee + _gst;
+
+  void _proceed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookingSummaryScreen(
+          caretaker: widget.caretaker,
+          date: _formattedDate,
+          time: _formattedTime,
+          duration: _durationHours,
+          location: _resolvedLocation,
+          requirements: _requirementsController.text,
+          serviceCharge: _serviceCharge,
+          convenienceFee: _convenienceFee,
+          gst: _gst,
+          total: _total,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final String formattedDate = "${_selectedDate.day} ${_getMonthName(_selectedDate.month)} ${_selectedDate.year}";
-    final String formattedTime = _selectedTime.format(context);
-
     return Scaffold(
-      backgroundColor: AppTheme.neutral100,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: AppTheme.primary,
-        foregroundColor: AppTheme.white,
+        foregroundColor: Colors.white,
         title: const Text('Book Caretaker', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date / Time / Duration
+            _sectionCard(children: [
+              _tappableRow('Select Date', _formattedDate, Icons.calendar_today_rounded, () => _selectDate(context)),
+              const Divider(height: 1),
+              _tappableRow('Select Time', _formattedTime, Icons.access_time_rounded, () => _selectTime(context)),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
                   children: [
-                    // Date Picker Row
-                    InkWell(
-                      onTap: () => _selectDate(context),
-                      child: _buildFormRow('Select Date', formattedDate, Icons.calendar_today),
-                    ),
-                    const Divider(height: 24),
-                    // Time Picker Row
-                    InkWell(
-                      onTap: () => _selectTime(context),
-                      child: _buildFormRow('Select Time', formattedTime, Icons.access_time),
-                    ),
-                    const Divider(height: 24),
-                    // Duration Manual Entry Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Duration (Hours)', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
-                        SizedBox(
-                          width: 100,
-                          child: TextField(
-                            controller: _durationController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.end,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                    const Expanded(child: Text('Duration (Hours)', style: TextStyle(fontSize: 14, color: Colors.grey))),
+                    SizedBox(
+                      width: 70,
+                      child: TextField(
+                        controller: _durationController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          isDense: true,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+            ]),
+            const SizedBox(height: 16),
 
-              // LOCATION SECTION WITH TWO OPTIONS
-              const Text('Location Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Container(
+            const Text('Location Details', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            _sectionCard(children: [
+              Padding(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Detect Map', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            value: 'detect',
-                            groupValue: _locationMode,
-                            onChanged: (value) {
-                              setState(() {
-                                _locationMode = value!;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Enter Manual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            value: 'manual',
-                            groupValue: _locationMode,
-                            onChanged: (value) {
-                              setState(() {
-                                _locationMode = value!;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
+                        _radioOption('detect', 'Detect Map'),
+                        const SizedBox(width: 24),
+                        _radioOption('manual', 'Enter Manual'),
                       ],
                     ),
-                    const Divider(height: 16),
-                    if (_locationMode == 'detect') ...[
+                    const SizedBox(height: 12),
+                    if (_locationMode == 'detect')
                       Row(
                         children: [
-                          const Icon(Icons.my_location, color: AppTheme.primary),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _detectedLocation,
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
+                          const Icon(Icons.my_location_rounded, color: AppTheme.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(_detectedLocation, style: const TextStyle(fontSize: 13))),
                           ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: AppTheme.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
                             onPressed: () async {
-                              // Navigate to MapPickerScreen and capture the returned location string
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (_) => const MapPickerScreen()),
                               );
-                              if (result != null) {
-                                setState(() {
-                                  _detectedLocation = result;
-                                });
-                              }
+                              if (result != null && mounted) setState(() => _detectedLocation = result.toString());
                             },
-                            child: const Text('Open Map'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Open Map', style: TextStyle(fontSize: 12)),
                           ),
                         ],
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 8),
-                      _buildTextField('Flat / House No.', _flatController),
-                      const SizedBox(height: 12),
-                      _buildTextField('Street', _streetController),
-                      const SizedBox(height: 12),
-                      _buildTextField('Area', _areaController),
-                      const SizedBox(height: 12),
-                      Row(
+                      )
+                    else
+                      Column(
                         children: [
-                          Expanded(child: _buildTextField('City', _cityController)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildTextField('State', _stateController)),
+                          _textField(_flatController, 'Flat / House No.'),
+                          const SizedBox(height: 8),
+                          _textField(_streetController, 'Street'),
+                          const SizedBox(height: 8),
+                          _textField(_areaController, 'Area / Landmark'),
+                          const SizedBox(height: 8),
+                          _textField(_cityController, 'City'),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: _buildTextField('Nation', _nationController)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildTextField('Mobile No.', _mobileController, keyboardType: TextInputType.phone),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
+            ]),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-              const Text('Special Requirements', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
+            const Text('Special Requirements', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+              child: TextField(
                 controller: _requirementsController,
                 maxLines: 3,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter any special requests...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(14),
                 ),
               ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: AppTheme.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const BookingSummaryScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+            ),
+            const SizedBox(height: 16),
 
-  Widget _buildFormRow(String label, String value, IconData icon) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
-        Row(
-          children: [
-            Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-            Icon(icon, size: 18, color: AppTheme.primary),
+            // Price preview
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Estimated Total ($_durationHours hrs)', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text('₹${_total.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primary)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _proceed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller, {TextInputType keyboardType = TextInputType.text}) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        filled: true,
-        fillColor: AppTheme.neutral100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
       ),
     );
   }
 
-  String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[month - 1];
-  }
+  Widget _sectionCard({required List<Widget> children}) => Container(
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    child: Column(children: children),
+  );
+
+  Widget _tappableRow(String label, String value, IconData icon, VoidCallback onTap) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey))),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 8),
+          Icon(icon, size: 18, color: AppTheme.primary),
+        ],
+      ),
+    ),
+  );
+
+  Widget _radioOption(String value, String label) => Row(
+    children: [
+      Radio<String>(
+        value: value,
+        groupValue: _locationMode,
+        onChanged: (v) => setState(() => _locationMode = v!),
+        activeColor: AppTheme.primary,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+    ],
+  );
+
+  Widget _textField(TextEditingController controller, String hint) => TextField(
+    controller: controller,
+    onChanged: (_) => setState(() {}),
+    decoration: InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: const Color(0xFFF5F7FA),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      isDense: true,
+    ),
+  );
 }

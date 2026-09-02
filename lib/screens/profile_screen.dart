@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/token_storage.dart';
@@ -13,10 +15,29 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   ProfileDetails _profileDetails = const ProfileDetails(
-    name: 'Aarav',
-    email: 'aarav@example.com',
-    phone: '+91 9876543210',
+    name: '',
+    email: '',
+    phone: '',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final name = await TokenStorage.instance.getUserName() ?? 'User';
+    if (mounted) {
+      setState(() {
+        _profileDetails = ProfileDetails(
+          name: name,
+          email: '',
+          phone: '',
+        );
+      });
+    }
+  }
 
   Future<void> _editProfile() async {
     final updatedDetails = await Navigator.push<ProfileDetails>(
