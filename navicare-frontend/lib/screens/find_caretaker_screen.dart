@@ -397,21 +397,39 @@ class _CaretakerCard extends StatelessWidget {
                           TextStyle(fontSize: 12, color: AppTheme.neutral600)),
 
                   const SizedBox(height: 3),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 11, color: AppTheme.neutral400),
-                      const SizedBox(width: 2),
-                      Text(caretaker['location']!,
-                          style: TextStyle(
-                              fontSize: 11, color: AppTheme.neutral500)),
-                      const SizedBox(width: 8),
-                      Icon(Icons.work_history_rounded,
-                          size: 11, color: AppTheme.neutral400),
-                      const SizedBox(width: 2),
-                      Text(caretaker['exp']!,
-                          style: TextStyle(
-                              fontSize: 11, color: AppTheme.neutral500)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.location_on_rounded,
+                              size: 11, color: AppTheme.neutral400),
+                          const SizedBox(width: 2),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 135),
+                            child: Text(caretaker['location']!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 11, color: AppTheme.neutral500)),
+                          ),
+                        ],
+                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.work_history_rounded,
+                              size: 11, color: AppTheme.neutral400),
+                          const SizedBox(width: 2),
+                          Text(caretaker['exp']!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.neutral500)),
+                        ],
+                        ),
                     ],
                   ),
 
@@ -423,14 +441,17 @@ class _CaretakerCard extends StatelessWidget {
                       const Icon(Icons.star_rounded,
                           color: Colors.amber, size: 14),
                       const SizedBox(width: 3),
-                      Text(
-                        '${caretaker['rating']} (${caretaker['reviews']})',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.neutral900),
+                      Expanded(
+                        child: Text(
+                          '${caretaker['rating']} (${caretaker['reviews']})',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.neutral900),
+                        ),
                       ),
-                      const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -440,6 +461,8 @@ class _CaretakerCard extends StatelessWidget {
                         ),
                         child: Text(
                           caretaker['price']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,

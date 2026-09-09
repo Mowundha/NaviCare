@@ -3,6 +3,7 @@ import '../services/token_storage.dart';
 import 'edit_caretaker_profile_screen.dart';
 import 'service_request_page.dart';
 import 'earnings_screen.dart';
+import 'role_entry_screen.dart';
 
 class CaretakerHomeScreen extends StatefulWidget {
   const CaretakerHomeScreen({super.key});
@@ -645,7 +646,11 @@ class _CaretakerProfilePageState extends State<CaretakerProfilePage> {
   Future<void> _logOut() async {
     await TokenStorage.instance.clearToken();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const RoleEntryScreen()),
+      (route) => false,
+    );
   }
 
   @override

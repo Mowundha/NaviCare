@@ -459,7 +459,7 @@ import 'screens/splash_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/user_login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/ai_travel_agent_page.dart';
 import 'screens/user_registration_page.dart';
@@ -480,7 +480,7 @@ class AccessEaseApp extends StatelessWidget {
       theme: AppTheme.theme,
       home: const SplashScreen(),
       routes: {
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const UserLoginScreen(),
         '/register': (context) => const UserRegistrationPage(),
         '/home': (context) => const MainShell(),
         '/profile': (context) => const ProfileScreen(),
@@ -504,7 +504,7 @@ class AuthGate extends StatelessWidget {
           );
         }
         final loggedIn = snapshot.data ?? false;
-        return loggedIn ? const MainShell() : const LoginScreen();
+        return loggedIn ? const MainShell() : const UserLoginScreen();
       },
     );
   }

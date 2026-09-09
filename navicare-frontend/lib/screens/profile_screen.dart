@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../services/token_storage.dart';
 import 'accessibility_preferences_screen.dart';
 import 'edit_profile_screen.dart';
+import 'role_entry_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -55,7 +56,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _logOut() async {
     await TokenStorage.instance.clearToken();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const RoleEntryScreen()),
+      (route) => false,
+    );
   }
 
   @override

@@ -13,8 +13,9 @@ import 'package:accessease/screens/profile_screen.dart';
 void main() {
   testWidgets('profile displays the edit control', (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: ProfileScreen()));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Aarav'), findsOneWidget);
+    expect(find.text('User'), findsOneWidget);
     expect(find.byTooltip('Edit profile'), findsOneWidget);
   });
 

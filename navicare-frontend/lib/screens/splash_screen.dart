@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/token_storage.dart';
-import '../main.dart';
-import 'login_screen.dart';
+import 'role_entry_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,13 +34,9 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    final loggedIn = await TokenStorage.instance.isLoggedIn;
-    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => loggedIn ? const MainShell() : const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const RoleEntryScreen()),
     );
   }
 
@@ -64,7 +58,6 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo container
                 Container(
                   width: 140,
                   height: 140,
@@ -73,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF4F46E5).withOpacity(0.4),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -86,7 +79,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 32),
-                // NaviCare text
                 const Text(
                   'NaviCare',
                   style: TextStyle(
@@ -106,7 +98,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 60),
-                // Loading indicator
                 const SizedBox(
                   width: 24,
                   height: 24,

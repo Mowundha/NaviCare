@@ -8117,47 +8117,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
  
-  void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
- 
   void _showCaretakerDialog(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const FindCaretakerScreen()),
-    );
-  }
-
-  void _showCaretakerDialogOLD(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text("Caretaker Request"),
-          content: const Text("Do you need a caretaker?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FindCaretakerScreen()),
-                );
-              },
-              child: const Text("Yes"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _showMessage(context, "No caretaker needed.");
-              },
-              child: const Text("No"),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -8469,13 +8432,21 @@ class _HomeScreenState extends State<HomeScreen> {
               // TOURIST PLACES - responsive grid
               LayoutBuilder(
                 builder: (context, constraints) {
+                  final query = _searchQuery.trim().toLowerCase();
+                  final filteredPlaces = query.isEmpty
+                      ? _touristPlaces
+                      : _touristPlaces.where((place) {
+                          return place.name.toLowerCase().contains(query) ||
+                              place.location.toLowerCase().contains(query) ||
+                              place.description.toLowerCase().contains(query);
+                        }).toList();
                   final width = constraints.maxWidth;
                   // mobile=1 col, tablet=2 col, desktop=4 col
                   final crossAxisCount = width > 900 ? 4 : width > 600 ? 2 : 1;
                   // fixed card height — tall enough for image + text + button
                   final cardHeight = width < 600 ? 460.0 : 380.0;
                   return GridView.builder(
-                    itemCount: _touristPlaces.length,
+                    itemCount: filteredPlaces.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -8485,7 +8456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisExtent: cardHeight,
                     ),
                     itemBuilder: (context, index) {
-                      final place = _touristPlaces[index];
+                      final place = filteredPlaces[index];
                       return _PlaceCard(
                         name: place.name,
                         location: place.location,

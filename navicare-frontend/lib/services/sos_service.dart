@@ -29,10 +29,6 @@ class SosService {
       final userDoc = await _getDocument('users', userId);
       final fields  = userDoc['fields'] as Map<String, dynamic>? ?? {};
 
-      // Parse emergencyContacts array
-      final List<dynamic> contactsRaw =
-          _extractArray(fields['emergencyContacts']) ?? [];
-
       // Parse activeBooking map
       final Map<String, dynamic>? activeBooking =
           _extractMap(fields['activeBooking']);
@@ -126,12 +122,6 @@ class SosService {
   }
 
   // ── Firestore value extractors ─────────────────────────────────────────────
-
-  static List<dynamic>? _extractArray(dynamic field) {
-    if (field == null) return null;
-    final values = (field as Map)['arrayValue']?['values'];
-    return values as List<dynamic>?;
-  }
 
   static Map<String, dynamic>? _extractMap(dynamic field) {
     if (field == null) return null;

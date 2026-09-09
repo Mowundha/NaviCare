@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
  
 class CommunityMainScreen extends StatefulWidget {
   const CommunityMainScreen({super.key});
@@ -88,7 +87,7 @@ class _CommunityMainScreenState extends State<CommunityMainScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Icon(Icons.whatsApp, size: 32, color: Colors.white),
-                    FaIcon(FontAwesomeIcons.whatsapp, size: 32, color: Colors.white),
+                        Icon(Icons.chat_rounded, size: 32, color: Colors.white),
                     SizedBox(width: 16),
                     Text(
                       'Join Community',

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/token_storage.dart';
+import 'role_entry_screen.dart';
 
 class CaretakerProfilePage extends StatelessWidget {
   const CaretakerProfilePage({super.key});
@@ -153,8 +155,16 @@ class CaretakerProfilePage extends StatelessWidget {
                   width: double.infinity,
                   height: 48,
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                    onPressed: () async {
+                      await TokenStorage.instance.clearToken();
+                      if (!context.mounted) return;
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RoleEntryScreen(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF4F46E5),

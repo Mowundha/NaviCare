@@ -124,8 +124,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
-// ignore: deprecated_member_use, avoid_web_libraries_in_flutter
-import 'dart:js' as js;
+import '../services/browser_js_stub.dart'
+  if (dart.library.js) '../services/browser_js_web.dart' as js;
 
 
 

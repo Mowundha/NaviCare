@@ -1443,7 +1443,6 @@
 
 
 
-
  
 
 
@@ -1625,14 +1624,14 @@
 
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:js' as js;
+import '../services/browser_js_stub.dart'
+  if (dart.library.js) '../services/browser_js_web.dart' as js;
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../services/token_storage.dart';
 import '../theme/app_theme.dart';
 import '../services/agent_service.dart';
 import 'find_caretaker_screen.dart';
-import 'caretaker_details_screen.dart';
  
 // ─── Message Model ────────────────────────────────────────────────────────────
 class AIMessage {
@@ -1687,15 +1686,12 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
  
-  // dart:js MediaRecorder — works on Flutter Web / mobile Chrome
-  js.JsObject? _mediaRecorder;
   final List<js.JsObject> _audioChunks = [];
   bool _isListening = false;
  
   final String _sessionId = 'session-${Random().nextInt(999999)}';
   String _userName = 'User';
   final AudioPlayer _audioPlayer = AudioPlayer();
-  bool _isPlayingAudio = false;
   bool _isTyping = false;
  
   // ── Live Voice Conversation Mode ──
@@ -1730,7 +1726,6 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
     _audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
-          _isPlayingAudio = false;
           _isAgentSpeaking = false;
         });
         if (_isVoiceConversationMode) {
@@ -1768,13 +1763,12 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
         if (window._navicareRecorder && window._navicareRecorder.state === 'recording') {
           window._navicareRecorder.stop();
         }
-      """]);"
+      """]);
       await _audioPlayer.stop();
       setState(() {
         _isVoiceConversationMode = false;
         _isListening = false;
         _isAgentSpeaking = false;
-        _isPlayingAudio = false;
       });
     } else {
       // ENTER voice mode
@@ -1792,10 +1786,10 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
     _audioChunks.clear();
 
     // Register Dart callbacks that JS will call when done
-    js.context['_navicareOnAudioReady'] = js.allowInterop((js.JsObject uint8) {
+    js.context['_navicareOnAudioReady'] = (js.JsObject uint8) {
       _handleAudioReady(uint8);
-    });
-    js.context['_navicareOnMicError'] = js.allowInterop((dynamic err) {
+    };
+    js.context['_navicareOnMicError'] = (dynamic err) {
       debugPrint('Mic error: $err');
       if (mounted) {
         setState(() { _isListening = false; _isVoiceConversationMode = false; });
@@ -1804,7 +1798,7 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
           backgroundColor: Colors.red,
         ));
       }
-    });
+    };
 
     // All promise/async work in JS — calls Dart back via registered functions
     js.context.callMethod('eval', ["""
@@ -1898,7 +1892,6 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
       if (audioUrl != null && audioUrl.isNotEmpty) {
         setState(() {
           _isAgentSpeaking = true;
-          _isPlayingAudio = true;
         });
         await _playAudioUrl(audioUrl);
       } else {
@@ -1914,6 +1907,17 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
       if (_isVoiceConversationMode) _startListeningForNextTurn();
     }
   }
+
+  Future<void> _playAudioUrl(String url) async {
+    try {
+      await _audioPlayer.play(UrlSource(url));
+    } catch (error) {
+      if (mounted) {
+        setState(() => _isAgentSpeaking = false);
+      }
+      debugPrint('Audio play error: $error');
+    }
+  }
  
   // ── Small mic in input bar — tap to start, tap again to stop & transcribe ──
 
@@ -1921,7 +1925,7 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
   void _toggleVoiceAssistant() {
     if (_isListening) {
       // STOP — JS recorder stops, onstop fires, we get transcript via sendVoiceMessage
-      js.context['_navicareOnAudioReady'] = js.allowInterop((js.JsObject uint8) async {
+      js.context['_navicareOnAudioReady'] = (js.JsObject uint8) async {
         final length = uint8['length'] as int;
         final audioBytes = Uint8List(length);
         for (int i = 0; i < length; i++) audioBytes[i] = uint8[i] as int;
@@ -1937,7 +1941,7 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
               result['response_text'] as String? ?? '';
           if (transcript.isNotEmpty) _controller.text = transcript;
         } catch (_) { setState(() => _isTyping = false); }
-      });
+      };
       js.context.callMethod('eval', ["""
         if (window._navicareRecorder && window._navicareRecorder.state === 'recording') {
           window._navicareRecorder.stop();
@@ -1946,9 +1950,9 @@ class _AITravelAgentPageState extends State<AITravelAgentPage>
       setState(() => _isListening = false);
     } else {
       // START — same JS flow as voice conversation mode
-      js.context['_navicareOnMicError'] = js.allowInterop((dynamic err) {
+      js.context['_navicareOnMicError'] = (dynamic err) {
         if (mounted) setState(() => _isListening = false);
-      });
+      };
       js.context.callMethod('eval', ["""
         (function() {
           navigator.mediaDevices.getUserMedia({ audio: true, video: false })

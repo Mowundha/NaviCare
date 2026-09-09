@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/mock_data.dart';
 import '../models/models.dart';
-import '../widgets/shared_widgets.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -161,14 +160,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: const Icon(Icons.explore_rounded, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Explore Nearby',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E))),
-              Text('Accessible places near you',
-                style: TextStyle(fontSize: 12, color: Color(0xFF8892A4))),
-            ],
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Explore Nearby',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E))),
+                Text('Accessible places near you',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF8892A4))),
+              ],
+            ),
           ),
           const Spacer(),
           Container(
@@ -207,9 +212,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primary),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Showing accessible places near Chennai',
-            style: TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w600),
+          Expanded(
+            child: Text(
+              'Showing accessible places near Chennai',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w600),
+            ),
           ),
           const Spacer(),
           Container(
@@ -362,7 +371,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.72,
+        mainAxisExtent: 280,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
